@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FcGoogle } from 'react-icons/fc'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -38,7 +39,13 @@ export default function LoginPage() {
               {isLoading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm text-black">
+          <div className="mt-4">
+            <Button variant="outline" className="w-full rounded-xl flex items-center justify-center">
+              <FcGoogle className="mr-2" />
+              Continue with Google
+            </Button>
+          </div>
+          <div className="mt-4 text-center text-sm text-gray-600">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-blue-600 hover:underline">
               Sign up

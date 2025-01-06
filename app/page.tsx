@@ -4,10 +4,14 @@ import { useEffect, useRef, useState } from 'react'
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Briefcase, CheckSquare, Heart } from 'lucide-react'
+import { Navbar } from "@/components/navbar"
+import Typed from 'typed.js'
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState(0)
   const sectionsRef = useRef<(HTMLElement | null)[]>([])
+  const typedRef1 = useRef<HTMLSpanElement>(null)
+  const typedRef2 = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,6 +33,26 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  useEffect(() => {
+    const typed1 = new Typed(typedRef1.current, {
+      strings: ['Reach your customers.'],
+      typeSpeed: 50,
+      showCursor: false,
+      onComplete: (self) => {
+        // Start the second animation when the first one completes
+        const typed2 = new Typed(typedRef2.current, {
+          strings: ['Wherever. Whenever.'],
+          typeSpeed: 50,
+          showCursor: false,
+        })
+      }
+    })
+
+    return () => {
+      typed1.destroy()
+    }
+  }, [])
+
   const gradientStyles = [
     {
       background: '#F8F8F8'
@@ -46,26 +70,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#F8F8F8]">
-      <header className="fixed top-0 w-full z-50 bg-[#F8F8F8] border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-gray-900">AI Sales Automation</span>
-          </Link>
-          <div className="flex items-center space-x-4">
-            <Link href="/login">
-              <Button variant="ghost" className="text-gray-700 hover:text-gray-900">
-                Sign in
-              </Button>
-            </Link>
-            <Link href="/signup">
-              <Button className="bg-purple-600 text-white hover:bg-purple-700">
-                Get started
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="relative pt-16">
         <section
@@ -75,9 +80,8 @@ export default function Home() {
         >
           <div className="container px-4 py-32 text-center">
             <h1 className="text-4xl md:text-7xl font-bold tracking-tighter text-gray-900 mb-8">
-              Reach your customers.
-              <br />
-              Wherever. Whenever.
+              <span ref={typedRef1} className="block mb-4"></span>
+              <span ref={typedRef2} className="block"></span>
             </h1>
             <Link href="/demo">
               <Button size="lg" className="bg-purple-600 text-white hover:bg-purple-700 rounded-full px-8 transition-all hover:shadow-lg">

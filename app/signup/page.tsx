@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FcGoogle } from 'react-icons/fc'
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -42,7 +43,13 @@ export default function SignupPage() {
               {isLoading ? "Creating account..." : "Create account"}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-4">
+            <Button variant="outline" className="w-full rounded-xl flex items-center justify-center">
+              <FcGoogle className="mr-2" />
+              Continue with Google
+            </Button>
+          </div>
+          <div className="mt-4 text-center text-sm text-gray-600">
             Already have an account?{" "}
             <Link href="/login" className="text-blue-600 hover:underline">
               Sign in
