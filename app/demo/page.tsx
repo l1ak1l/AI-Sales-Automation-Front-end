@@ -17,7 +17,41 @@ export default function DemoPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setIsLoading(true)
-    // Add your demo booking logic here
+
+    // Gather form data
+    const formData = {
+      name: e.target.name.value, // Input with id="name"
+      phone: e.target.phone.value, // Input with id="phone"
+      product: e.target.product.value, // Input with id="product"
+      description: e.target.description.value, // Textarea with id="description"
+    }
+
+    console.log(formData)
+    
+    try {
+      // Send JSON response to the backend
+      const response = await fetch("http://127.0.0.1:5000/post-user-info", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        console.log("Demo booked successfully");
+        router.push("/voice-demo");
+      } else {
+        console.error("Failed to book demo:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error occurred while booking demo:", error);
+    } finally {
+      setIsLoading(false);
+    }
+
+
+
     setTimeout(() => {
       setIsLoading(false)
       router.push('/voice-demo')

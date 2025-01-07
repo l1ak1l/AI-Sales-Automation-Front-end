@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Navbar } from "@/components/navbar"
@@ -8,49 +8,87 @@ import { Navbar } from "@/components/navbar"
 export default function VoiceDemoPage() {
   const [isListening, setIsListening] = useState(false)
   const [messages, setMessages] = useState<{ type: 'user' | 'ai'; text: string }[]>([])
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement | null>(null) // Ref for auto-scroll
 
-  // Dummy function to simulate voice input
-  const simulateVoiceInput = () => {
-    const dummyTexts = [
-      "Hello, how can you assist me today?",
-      "What's the weather like?",
-      "Tell me a joke.",
-      "What are your capabilities?",
-      "Thank you for your help."
-    ]
-    return dummyTexts[Math.floor(Math.random() * dummyTexts.length)]
-  }
+  let recognition: SpeechRecognition | null = null
+  let finalTranscript = ''
 
-  // Dummy function to simulate AI response
-  const simulateAiResponse = (input: string) => {
-    const responses: {[key: string]: string} = {
-      "Hello, how can you assist me today?": "Hello! I'm here to help you with any questions or tasks you may have. How can I assist you today?",
-      "What's the weather like?": "I'm sorry, I don't have access to real-time weather information. You might want to check a weather app or website for the most up-to-date forecast.",
-      "Tell me a joke.": "Why don't scientists trust atoms? Because they make up everything!",
-      "What are your capabilities?": "As an AI language model, I can assist with a wide range of tasks including answering questions, providing explanations, offering suggestions, and helping with various types of analysis and problem-solving.",
-      "Thank you for your help.": "You're welcome! I'm glad I could assist you. If you have any more questions, feel free to ask."
+  const startRecognition = () => {
+    if (!('webkitSpeechRecognition' in window)) {
+      alert('Speech recognition is not supported in this browser.')
+      return
     }
-    return responses[input] || "I'm sorry, I didn't understand that. Could you please rephrase your question?"
-  }
 
-  const startListening = () => {
+    recognition = new (window as any).webkitSpeechRecognition()
+    recognition.interimResults = true
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      finalTranscript = Array.from(event.results)
+        .map(result => result[0].transcript)
+        .join('')
+      // document.getElementById('output')!.textContent = finalTranscript
+    }
+
+    recognition.onspeechend = () => {
+      recognition?.stop();
+      stopListening()
+      const userMessage = finalTranscript.trim();
+      if (userMessage) {
+        setMessages(prev => [...prev, { type: 'user', text: userMessage }]);
+    
+        // Send transcription to the server
+        fetch('http://127.0.0.1:5000/transcription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ text: userMessage }),
+        })
+          .then(response => response.json())
+          .then(data => {
+            console.log('Server response:', data); // Log the entire response
+    
+            const serverMessage = data.message || 'No response from server.';
+            setMessages(prev => [...prev, { type: 'ai', text: serverMessage }]);
+    
+            if (data.audio_url) {
+              setAudioUrl(data.audio_url);
+    
+              // Auto-play audio
+              const audioElement = new Audio(data.audio_url);
+              console.log("AUDIO KA URL : ",data.audio_url)
+              audioElement.play();
+            }
+          })
+          .catch(error => {
+            console.error('Error sending transcription:', error);
+            setMessages(prev => [...prev, { type: 'ai', text: 'Error communicating with server.' }]);
+          });
+      }
+    };
+    
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error('Speech recognition error:', event.error)
+    }
+
+    recognition.start()
     setIsListening(true)
-    // Simulate voice input after a short delay
-    setTimeout(() => {
-      const text = simulateVoiceInput()
-      setMessages(prev => [...prev, { type: 'user', text }])
-      // Simulate AI response
-      setTimeout(() => {
-        const response = simulateAiResponse(text)
-        setMessages(prev => [...prev, { type: 'ai', text: response }])
-        setIsListening(false)
-      }, 1000)
-    }, 1000)
   }
 
   const stopListening = () => {
+    if (recognition) {
+      recognition.stop()
+    }
     setIsListening(false)
   }
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages])
 
   return (
     <div className="min-h-screen bg-[#f8f8f8] flex flex-col">
@@ -66,17 +104,16 @@ export default function VoiceDemoPage() {
             transition={{
               duration: 1.5,
               repeat: isListening ? Infinity : 0,
-              repeatType: "reverse",
+              repeatType: 'reverse',
             }}
           />
-
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-4 mb-8 h-64 overflow-y-auto">
+          <div
+            className="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-4 mb-8 h-64 overflow-y-auto"
+          >
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`mb-4 ${
-                  message.type === 'user' ? 'text-right' : 'text-left'
-                }`}
+                className={`mb-4 ${message.type === 'user' ? 'text-right' : 'text-left'}`}
               >
                 <span
                   className={`inline-block p-2 rounded-lg ${
@@ -89,22 +126,16 @@ export default function VoiceDemoPage() {
                 </span>
               </div>
             ))}
+            <div ref={messagesEndRef} /> {/* Scroll anchor */}
           </div>
 
           <div className="flex justify-center space-x-4">
             <Button
-              onClick={startListening}
+              onClick={startRecognition}
               disabled={isListening}
               className="bg-blue-500 bg-opacity-50 backdrop-filter backdrop-blur-lg text-white rounded-xl px-6 py-2 hover:bg-blue-600 transition-colors duration-300"
             >
               Start
-            </Button>
-            <Button
-              onClick={stopListening}
-              disabled={!isListening}
-              className="bg-red-500 bg-opacity-50 backdrop-filter backdrop-blur-lg text-white rounded-xl px-6 py-2 hover:bg-red-600 transition-colors duration-300"
-            >
-              Stop
             </Button>
           </div>
         </div>
@@ -112,3 +143,4 @@ export default function VoiceDemoPage() {
     </div>
   )
 }
+
