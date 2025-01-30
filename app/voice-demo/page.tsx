@@ -1,3 +1,4 @@
+// Frontend Code (voice-demo-page.tsx)
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
@@ -9,7 +10,8 @@ export default function VoiceDemoPage() {
   const [isListening, setIsListening] = useState(false)
   const [messages, setMessages] = useState<{ type: 'user' | 'ai'; text: string }[]>([])
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement | null>(null) // Ref for auto-scroll
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   let recognition: SpeechRecognition | null = null
   let finalTranscript = ''
@@ -27,7 +29,6 @@ export default function VoiceDemoPage() {
       finalTranscript = Array.from(event.results)
         .map(result => result[0].transcript)
         .join('')
-      // document.getElementById('output')!.textContent = finalTranscript
     }
 
     recognition.onspeechend = () => {
@@ -37,8 +38,7 @@ export default function VoiceDemoPage() {
       if (userMessage) {
         setMessages(prev => [...prev, { type: 'user', text: userMessage }]);
     
-        // Send transcription to the server
-        fetch('http://127.0.0.1:5000/transcription', {
+        fetch('http://127.0.0.1:8000/transcription', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -47,18 +47,27 @@ export default function VoiceDemoPage() {
         })
           .then(response => response.json())
           .then(data => {
-            console.log('Server response:', data); // Log the entire response
+            console.log('Server response:', data);
     
             const serverMessage = data.message || 'No response from server.';
             setMessages(prev => [...prev, { type: 'ai', text: serverMessage }]);
     
             if (data.audio_url) {
-              setAudioUrl(data.audio_url);
+              // Add timestamp to avoid browser caching
+              const timestampedUrl = `${data.audio_url}?t=${Date.now()}`;
+              setAudioUrl(timestampedUrl);
     
-              // Auto-play audio
-              const audioElement = new Audio(data.audio_url);
-              console.log("AUDIO KA URL : ",data.audio_url)
-              audioElement.play();
+              // Create new audio element each time
+              if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.src = timestampedUrl;
+                audioRef.current.load();
+                audioRef.current.play().catch(err => console.error('Audio playback error:', err));
+              } else {
+                const newAudio = new Audio(timestampedUrl);
+                audioRef.current = newAudio;
+                newAudio.play().catch(err => console.error('Audio playback error:', err));
+              }
             }
           })
           .catch(error => {
@@ -67,7 +76,6 @@ export default function VoiceDemoPage() {
           });
       }
     };
-    
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('Speech recognition error:', event.error)
@@ -83,6 +91,16 @@ export default function VoiceDemoPage() {
     }
     setIsListening(false)
   }
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -126,7 +144,7 @@ export default function VoiceDemoPage() {
                 </span>
               </div>
             ))}
-            <div ref={messagesEndRef} /> {/* Scroll anchor */}
+            <div ref={messagesEndRef} />
           </div>
 
           <div className="flex justify-center space-x-4">
@@ -143,4 +161,3 @@ export default function VoiceDemoPage() {
     </div>
   )
 }
-
