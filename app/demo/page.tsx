@@ -30,7 +30,7 @@ export default function DemoPage() {
     
     try {
       // Send JSON response to the backend
-      const response = await fetch("http://127.0.0.1:5000/post-user-info", {
+      const response = await fetch("http://127.0.0.1:8000/post-user-info", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
