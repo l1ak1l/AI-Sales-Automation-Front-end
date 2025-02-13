@@ -63,7 +63,7 @@ export default function CallingPage() {
                 </div>
 
                 <div className="container ">
-                    <div className="flex-1 justify-center bg-gray-200 p-6">
+                    <div className="flex-1 justify-center p-6">
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             <Card className="bg-white/80 text-gray-900 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
                                 <CardHeader>
