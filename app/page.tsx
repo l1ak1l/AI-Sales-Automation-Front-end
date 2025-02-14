@@ -146,8 +146,8 @@ export default function Home() {
               <h4 className="font-bold text-xl mb-6">Legal</h4>
               <ul className="space-y-4">
                 <li>
-                  <Link href="#" className="text-gray-400 hover:text-white text-lg">
-                    Privacy
+                  <Link href="/calling" className="text-gray-400 hover:text-white text-lg">
+                    Calling
                   </Link>
                 </li>
                 <li>

@@ -13,6 +13,8 @@ import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
 import { CardSpotlightComponent } from "@/components/card-spotlight";
 import { Briefcase, CheckSquare, Heart } from "lucide-react";
+import { Navbar } from "@/components/navbar"
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 
@@ -27,10 +29,54 @@ export default function CallingPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            <div className="flex pt-16 flex-wrap">
+        <div className="w-full bg-gray-100">
+            <div className="">
+                <Navbar />
+
+            </div>
+
+
+
+            {/* <div className="hidden md:block">
                 <Sidebar />
-                <div className="flex-1 p-8 text-black min-w-screen">
+            </div>  */}
+
+
+
+            <div className="flex flex-wrap">
+                <div className="flex-1 justify-center px-5 py-6 md:px-10 lg:px-20">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        <Card className="bg-white/80 text-gray-900 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
+                            <CardHeader>
+                                <CardTitle>Total SMS</CardTitle>
+                                <CardDescription>Current month</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-3xl font-bold text-gray-900">16,060</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="bg-white/80 text-gray-900 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
+                            <CardHeader>
+                                <CardTitle>Total Calls</CardTitle>
+                                <CardDescription>Current month</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-3xl font-bold text-gray-900">2,668</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="bg-white/80 text-gray-900 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
+                            <CardHeader>
+                                <CardTitle>Total Emails</CardTitle>
+                                <CardDescription>Current month</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-3xl font-bold text-gray-900">250</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                </div>
+                <div className="w-full px-5 md:px-10 lg:px-20">
                     <Card>
                         <CardHeader>
                             <CardTitle>Call List</CardTitle>
@@ -61,42 +107,10 @@ export default function CallingPage() {
                         </CardContent>
                     </Card>
                 </div>
-
-                <div className="container ">
-                    <div className="flex-1 justify-center p-6">
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            <Card className="bg-white/80 text-gray-900 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
-                                <CardHeader>
-                                    <CardTitle>Total SMS</CardTitle>
-                                    <CardDescription>Current month</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-3xl font-bold text-gray-900">16,060</p>
-                                </CardContent>
-                            </Card>
-                            <Card className="bg-white/80 text-gray-900 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
-                                <CardHeader>
-                                    <CardTitle>Total Calls</CardTitle>
-                                    <CardDescription>Current month</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-3xl font-bold text-gray-900">2,668</p>
-                                </CardContent>
-                            </Card>
-                            <Card className="bg-white/80 text-gray-900 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
-                                <CardHeader>
-                                    <CardTitle>Total Emails</CardTitle>
-                                    <CardDescription>Current month</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-3xl font-bold text-gray-900">250</p>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
-
-                </div>
             </div>
+
+
         </div>
+
     );
 }
