@@ -1,46 +1,21 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FcGoogle } from "react-icons/fc";
+import { useState } from "react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FcGoogle } from 'react-icons/fc'
 
 export default function LoginPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false)
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const response = await fetch("http://localhost:8000/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log("Login successful", data);
-        // Handle successful login: store the token or redirect
-      } else {
-        setError(data.detail || "Login failed");
-      }
-    } catch (error) {
-      setError("An error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    e.preventDefault()
+    setIsLoading(true)
+    // Add your login logic here
+    setTimeout(() => setIsLoading(false), 1000)
   }
 
   return (
@@ -54,42 +29,22 @@ export default function LoginPage() {
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-                className="rounded-xl bg-[#F8F8F8]"
-              />
+              <Input id="email" type="email" placeholder="Enter your email" required className="rounded-xl bg-[#F8F8F8]" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-                className="rounded-xl bg-[#F8F8F8]"
-              />
+              <Input id="password" type="password" placeholder="Enter your password" required className="rounded-xl bg-[#F8F8F8]" />
             </div>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
             <Button type="submit" className="w-full bg-blue-600 text-white hover:bg-blue-700 rounded-xl" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
-          
-          {/* <div className="mt-4">
+          <div className="mt-4">
             <Button variant="outline" className="w-full rounded-xl flex items-center justify-center">
               <FcGoogle className="mr-2" />
               Continue with Google
             </Button>
           </div>
-           */}
-           
           <div className="mt-4 text-center text-sm text-gray-600">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-blue-600 hover:underline">
@@ -99,5 +54,6 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
+

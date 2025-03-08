@@ -12,9 +12,9 @@ export default function Home() {
   const lines = ["Reach your customers.", "Wherever. Whenever."]
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden">
+    <div className="min-h-screen bg-black text-white overflow-hidden w-full">
       <WavyBackground className="min-h-screen pb-40">
-        <div className="container mx-auto px-4">
+        <div className="container mx-full px-4">
           <div className="flex flex-col items-center justify-center min-h-screen text-center pt-16">
             <div className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight mix-blend-difference space-y-4">
               {/* First line */}
@@ -146,8 +146,8 @@ export default function Home() {
               <h4 className="font-bold text-xl mb-6">Legal</h4>
               <ul className="space-y-4">
                 <li>
-                  <Link href="/calling" className="text-gray-400 hover:text-white text-lg">
-                    Calling
+                  <Link href="#" className="text-gray-400 hover:text-white text-lg">
+                    Privacy
                   </Link>
                 </li>
                 <li>

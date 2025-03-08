@@ -1,60 +1,86 @@
-import { useState } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react"; // Icons for the hamburger menu
+"use client"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { Menu } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useSidebar } from "@/components/ui/sidebar"
+
+const navItems = [
+  { name: "Home", link: "/" },
+  { name: "Dashboard", link: "/dashboard" },
+  { name: "CRM Integration", link: "/crm-integration" },
+  { name: "Sales Agent", link: "/sales-agent" },
+  { name: "Demo", link: "/demo" },
+]
 
 export function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname()
+  const isHomePage = pathname === "/"
+  const { toggleSidebar } = useSidebar()
 
-  return (
-    <nav className="w-full bg-[#f8f8f8] shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          {/* Logo */}
-          <Link href="/" className="flex-shrink-0 flex items-center">
-            <span className="text-2xl font-bold text-gray-900">AI Sales Automation</span>
+  // Don't show the navbar on the landing page
+  if (isHomePage) {
+    return (
+      <header className="py-4 fixed w-full z-10 transition-colors duration-300 bg-transparent">
+        <nav className="container mx-auto px-4 flex justify-between items-center">
+          <Link href="/" className="text-2xl font-bold text-white">
+            AI Sales Automation
           </Link>
+          <ul className="hidden md:flex space-x-6">
+            {navItems.map((item) => (
+              <li key={item.name}>
+                <Link href={item.link} className="hover:opacity-80 transition-colors text-white">
+                  {item.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Button
+            variant="outline"
+            size="sm"
+            className="md:hidden bg-transparent border-white text-white hover:bg-white/20"
+            onClick={toggleSidebar}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </nav>
+      </header>
+    )
+  }
 
-          {/* Desktop Links (Hidden on small screens) */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Link href="/">
-              <Button variant="ghost" className="text-gray-700 hover:text-gray-900">Home</Button>
-            </Link>
-            <Link href="/dashboard">
-              <Button variant="ghost" className="text-gray-700 hover:text-gray-900">Dashboard</Button>
-            </Link>
-            <Link href="/demo">
-              <Button variant="ghost" className="text-gray-700 hover:text-gray-900">Demo</Button>
-            </Link>
-            <Link href="/login">
-              <Button variant="ghost" className="text-gray-700 hover:text-gray-900">Sign in</Button>
-            </Link>
-          </div>
-
-          {/* Mobile Menu Button (Hidden on larger screens) */}
-          <button className="md:hidden text-gray-900" onClick={() => setIsOpen(!isOpen)}>
-            {isOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
+  // Show a different navbar for dashboard pages
+  return (
+    <header className="fixed top-0 left-0 right-0 h-16 border-b bg-white z-40 px-4">
+      <div className="flex h-full items-center justify-between">
+        <div className="flex items-center gap-2 md:gap-4">
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar} aria-label="Toggle sidebar">
+            <Menu className="h-5 w-5" />
+          </Button>
+          <Link href="/" className="flex items-center gap-2">
+            <span className="text-xl font-bold">AI Sales Automation</span>
+          </Link>
         </div>
-
-        {/* Mobile Menu (Only visible when toggled) */}
-        {isOpen && (
-          <div className="md:hidden flex flex-col space-y-2 p-4 bg-[#f8f8f8] shadow-md rounded-md">
-            <Link href="/" className="block">
-              <Button variant="ghost" className="w-full text-gray-700 hover:text-gray-900">Home</Button>
+        <nav className="hidden md:flex items-center gap-6">
+          {navItems.slice(1).map((item) => (
+            <Link
+              key={item.name}
+              href={item.link}
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                pathname === item.link ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              {item.name}
             </Link>
-            <Link href="/dashboard" className="block">
-              <Button variant="ghost" className="w-full text-gray-700 hover:text-gray-900">Dashboard</Button>
-            </Link>
-            <Link href="/demo" className="block">
-              <Button variant="ghost" className="w-full text-gray-700 hover:text-gray-900">Demo</Button>
-            </Link>
-            <Link href="/login" className="block">
-              <Button variant="ghost" className="w-full text-gray-700 hover:text-gray-900">Sign in</Button>
-            </Link>
-          </div>
-        )}
+          ))}
+        </nav>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm">
+            Sign In
+          </Button>
+          <Button size="sm">Get Started</Button>
+        </div>
       </div>
-    </nav>
-  );
+    </header>
+  )
 }
+
