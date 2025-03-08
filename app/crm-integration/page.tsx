@@ -15,6 +15,7 @@ const crmPlatforms = [
   { id: 2, name: "HubSpot", connected: false },
   { id: 3, name: "Zoho CRM", connected: false },
   { id: 4, name: "Pipedrive", connected: false },
+  { id: 5, name: "Freshsales", connected: false },
 ]
 
 // Dummy data for CRM fields
