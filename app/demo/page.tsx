@@ -19,7 +19,7 @@ export default function DemoPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F8F8F8] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#F8F8F8] p-4 w-full">
       <Card className="w-full max-w-2xl bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-gray-900">Book a Demo</CardTitle>
