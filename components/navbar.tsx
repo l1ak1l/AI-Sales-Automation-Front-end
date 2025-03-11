@@ -74,10 +74,16 @@ export function Navbar() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            Sign In
-          </Button>
-          <Button size="sm">Get Started</Button>
+          <Link href="/signup">
+            <Button variant="outline" size="sm">
+              Sign In
+            </Button>
+          </Link>
+          <Link href="/signup">
+            <Button size="sm">
+              Get Started
+            </Button>
+          </Link>
         </div>
       </div>
     </header>
