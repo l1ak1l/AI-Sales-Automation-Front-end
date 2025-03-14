@@ -3,6 +3,7 @@ import { useState } from "react"
 import { CardSpotlightComponent } from "@/components/card-spotlight"
 import { WavyBackground } from "@/components/ui/wavy-background"
 import { TypedTextEffect } from "@/components/ui/typed-text-effect"
+import { Banner } from "@/components/banner" // Import the Banner component
 import { Briefcase, CheckSquare, Heart } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -13,7 +14,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden w-full">
-      <WavyBackground className="min-h-screen pb-40">
+      <WavyBackground className="min-h-screen pb-20">
         <div className="container mx-full px-4">
           <div className="flex flex-col items-center justify-center min-h-screen text-center pt-16">
             <div className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight mix-blend-difference space-y-4">
@@ -79,7 +80,17 @@ export default function Home() {
         </div>
       </WavyBackground>
 
-      <main className="container mx-auto px-4">
+
+
+
+      <div className="flex items-center justify-center ">
+        <Banner />
+      </div>
+
+
+
+
+      <main className="container mx-auto px-4 pt-5">
         <section className="py-24">
           <div className="text-center">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-12">Ready to get started?</h2>
