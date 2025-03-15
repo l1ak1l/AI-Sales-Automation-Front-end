@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation"  // Add this import
+import { useDispatch } from "react-redux";
+import { login } from "@/app/store/features/authSlice";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +14,7 @@ import { FcGoogle } from "react-icons/fc";
 
 export default function LoginPage() {
   const router=useRouter()
+  const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,8 +37,16 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push('/reporting')
-        console.log("Login successful", data);
+        // Store token in localStorage for persistence
+        localStorage.setItem('token', data.token);
+        
+        // Dispatch login action to Redux
+        dispatch(login({ 
+          user: data.user || { email },  // Use email if user data not provided
+          token: data.token 
+        }));
+        
+        router.push('/reporting');
 
         // Handle successful login: store the token or redirect
       } else {

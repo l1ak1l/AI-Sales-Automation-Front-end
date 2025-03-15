@@ -45,7 +45,7 @@ export default function SignupPage() {
         alert(`Error: ${errorData.detail}`)
       } else {
         alert("Account created successfully!")
-        router.push('/dashboard')  // Add this line to redirect
+        router.push('/reporting')  // Add this line to redirect
       }
     } catch (error) {
       alert(`Something went wrong: `)
