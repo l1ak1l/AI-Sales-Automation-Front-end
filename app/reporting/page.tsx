@@ -21,6 +21,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { DashboardLayout } from "@/components/dashboard-layout"
+import { useAuth } from "@/hooks/useAuth";
 
 // Dummy data for charts
 const salesData = [

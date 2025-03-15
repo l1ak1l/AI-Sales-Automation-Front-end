@@ -16,6 +16,9 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Check, Filter, Phone } from "lucide-react"
 
+import { useAuth } from "@/hooks/useAuth"
+import { useRouter } from "next/navigation"
+
 // Dummy data for leads
 const dummyLeads = [
   {
@@ -155,6 +158,10 @@ const dummyInsights = [
 ]
 
 export default function SalesAgentPage() {
+  
+  const { isAuthenticated } = useAuth(true);
+  const router = useRouter();
+
   const [leads, setLeads] = useState(dummyLeads)
   const [tasks, setTasks] = useState(dummyTasks)
   const [insights, setInsights] = useState(dummyInsights)

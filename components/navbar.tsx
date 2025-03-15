@@ -4,6 +4,10 @@ import { usePathname } from "next/navigation"
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useSidebar } from "@/components/ui/sidebar"
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "@/app/store/features/authSlice";
+import { useRouter } from "next/navigation";
+import { RootState } from "@/app/store/store";
 
 const navItems = [
   { name: "Home", link: "/" },
@@ -17,6 +21,21 @@ export function Navbar() {
   const pathname = usePathname()
   const isHomePage = pathname === "/"
   const { toggleSidebar } = useSidebar()
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+
+
+  const handleLogout = () => {
+    // Clear token from localStorage
+    localStorage.removeItem('token');
+    
+    // Dispatch logout action
+    dispatch(logout());
+    
+    // Redirect to login page
+    router.push('/login');
+  };
 
   // Don't show the navbar on the landing page
   if (isHomePage) {
@@ -74,16 +93,24 @@ export function Navbar() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Link href="/signup">
-            <Button variant="outline" size="sm">
-              Sign In
+          {isAuthenticated ? (
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              Logout
             </Button>
-          </Link>
-          <Link href="/signup">
-            <Button size="sm">
-              Get Started
-            </Button>
-          </Link>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button variant="outline" size="sm">
+                  Login
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button size="sm">
+                  Sign Up
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>

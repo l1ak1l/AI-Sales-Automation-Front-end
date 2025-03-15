@@ -9,6 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
+import { useAuth } from "@/hooks/useAuth"
+import { useRouter } from "next/navigation"
+
 // Dummy data for CRM platforms
 const crmPlatforms = [
   { id: 1, name: "Salesforce", connected: false },
@@ -41,6 +44,9 @@ const extractionLogs = [
 ]
 
 export default function CRMIntegrationPage() {
+  const { isAuthenticated } = useAuth(true);
+  const router = useRouter();
+
   const [platforms, setPlatforms] = useState(crmPlatforms)
   const [fields, setFields] = useState(crmFields)
   const [logs, setLogs] = useState(extractionLogs)
