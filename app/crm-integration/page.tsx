@@ -70,63 +70,7 @@ const extractionLogs = [
 ]
 
 // Dummy data for uploaded files
-const uploadedFiles = [
-  {
-    id: 1,
-    name: "Customer_Data_Import.csv",
-    type: "csv",
-    size: "3.2 MB",
-    uploadDate: "2025-03-15",
-    status: "Processed",
-    destination: "Salesforce",
-    records: 450,
-    progress: 100,
-  },
-  {
-    id: 2,
-    name: "Leads_March2025.xlsx",
-    type: "xlsx",
-    size: "1.8 MB",
-    uploadDate: "2025-03-14",
-    status: "Processed",
-    destination: "HubSpot",
-    records: 215,
-    progress: 100,
-  },
-  {
-    id: 3,
-    name: "Marketing_Contacts.csv",
-    type: "csv",
-    size: "4.5 MB",
-    uploadDate: "2025-03-12",
-    status: "Processing",
-    destination: "Zoho CRM",
-    records: 780,
-    progress: 65,
-  },
-  {
-    id: 4,
-    name: "Sales_Opportunities_Q1.xlsx",
-    type: "xlsx",
-    size: "2.3 MB",
-    uploadDate: "2025-03-10",
-    status: "Failed",
-    destination: "Pipedrive",
-    records: 0,
-    progress: 100,
-  },
-  {
-    id: 5,
-    name: "Support_Tickets.csv",
-    type: "csv",
-    size: "1.1 MB",
-    uploadDate: "2025-03-08",
-    status: "Queued",
-    destination: "Freshsales",
-    records: 0,
-    progress: 0,
-  },
-]
+const uploadedFiles = []
 
 // Function to get the appropriate icon based on file type
 const getFileIcon = (type: string) => {
@@ -389,13 +333,16 @@ export default function CRMIntegrationPage() {
   return (
     <DashboardLayout>
       <div className="p-4">
-        <h1 className="text-3xl font-bold mb-6">CRM Data Integration</h1>
+        <h1 className="text-3xl font-bold mb-6">Connect Your Data</h1>
 
         <Tabs defaultValue="connect" className="mb-8">
           <TabsList className="mb-4">
             <TabsTrigger value="connect">Connect CRM</TabsTrigger>
-            <TabsTrigger value="mapping">Field Mapping</TabsTrigger>
+            {/* <TabsTrigger value="mapping">Field Mapping</TabsTrigger> */}
             <TabsTrigger value="data-management">Data Management</TabsTrigger>
+            
+            <TabsTrigger value="data-management">Upload Reporting Data</TabsTrigger>
+
             <TabsTrigger value="logs">Activity Logs</TabsTrigger>
           </TabsList>
 
@@ -473,7 +420,7 @@ export default function CRMIntegrationPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="mapping">
+          {/* <TabsContent value="mapping">
             <Card>
               <CardHeader>
                 <CardTitle>Field Mapping</CardTitle>
@@ -509,7 +456,7 @@ export default function CRMIntegrationPage() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsContent> */}
 
           <TabsContent value="data-management">
             <Card>
@@ -573,82 +520,90 @@ export default function CRMIntegrationPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {files.map((file) => (
-                            <TableRow key={file.id}>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  {getFileIcon(file.type)}
-                                  <span className="font-medium">{file.name}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                                  {file.uploadDate}
-                                </div>
-                              </TableCell>
-                              <TableCell>{file.size}</TableCell>
-                              <TableCell>{getStatusBadge(file.status)}</TableCell>
-                              <TableCell>
-                                {file.status === "Processing" ? (
-                                  <div className="flex items-center gap-2">
-                                    <Progress value={file.progress} className="h-2 w-16" />
-                                    <span className="text-xs text-muted-foreground">{file.progress}%</span>
-                                  </div>
-                                ) : (
-                                  file.records.toLocaleString()
-                                )}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                  {file.status === "Uploaded" && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="flex items-center gap-1"
-                                      onClick={() => startProcessing(file.id)}
-                                    >
-                                      <RefreshCw className="h-3.5 w-3.5" />
-                                      Process
-                                    </Button>
-                                  )}
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                        <span className="sr-only">Open menu</span>
-                                        <File className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem className="cursor-pointer">
-                                        <Eye className="mr-2 h-4 w-4" />
-                                        <span>View Details</span>
-                                      </DropdownMenuItem>
-                                      {file.status === "Processed" && (
-                                        <DropdownMenuItem className="cursor-pointer">
-                                          <Download className="mr-2 h-4 w-4" />
-                                          <span>Download</span>
-                                        </DropdownMenuItem>
-                                      )}
-                                      {file.status === "Failed" && (
-                                        <DropdownMenuItem className="cursor-pointer">
-                                          <RefreshCw className="mr-2 h-4 w-4" />
-                                          <span>Retry</span>
-                                        </DropdownMenuItem>
-                                      )}
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem className="cursor-pointer text-red-600">
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        <span>Delete</span>
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
+                          {files.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                                No files uploaded yet. Upload a file to see it here.
                               </TableCell>
                             </TableRow>
-                          ))}
+                          ) : (
+                            files.map((file) => (
+                              <TableRow key={file.id}>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    {getFileIcon(file.type)}
+                                    <span className="font-medium">{file.name}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-1">
+                                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                    {file.uploadDate}
+                                  </div>
+                                </TableCell>
+                                <TableCell>{file.size}</TableCell>
+                                <TableCell>{getStatusBadge(file.status)}</TableCell>
+                                <TableCell>
+                                  {file.status === "Processing" ? (
+                                    <div className="flex items-center gap-2">
+                                      <Progress value={file.progress} className="h-2 w-16" />
+                                      <span className="text-xs text-muted-foreground">{file.progress}%</span>
+                                    </div>
+                                  ) : (
+                                    file.records.toLocaleString()
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex justify-end gap-2">
+                                    {file.status === "Uploaded" && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="flex items-center gap-1"
+                                        onClick={() => startProcessing(file.id)}
+                                      >
+                                        <RefreshCw className="h-3.5 w-3.5" />
+                                        Process
+                                      </Button>
+                                    )}
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                          <span className="sr-only">Open menu</span>
+                                          <File className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className="cursor-pointer">
+                                          <Eye className="mr-2 h-4 w-4" />
+                                          <span>View Details</span>
+                                        </DropdownMenuItem>
+                                        {file.status === "Processed" && (
+                                          <DropdownMenuItem className="cursor-pointer">
+                                            <Download className="mr-2 h-4 w-4" />
+                                            <span>Download</span>
+                                          </DropdownMenuItem>
+                                        )}
+                                        {file.status === "Failed" && (
+                                          <DropdownMenuItem className="cursor-pointer">
+                                            <RefreshCw className="mr-2 h-4 w-4" />
+                                            <span>Retry</span>
+                                          </DropdownMenuItem>
+                                        )}
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className="cursor-pointer text-red-600">
+                                          <Trash2 className="mr-2 h-4 w-4" />
+                                          <span>Delete</span>
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
                         </TableBody>
                       </Table>
                     </div>
