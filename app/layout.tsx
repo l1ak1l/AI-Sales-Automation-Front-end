@@ -3,12 +3,11 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Navbar } from "@/components/navbar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Provider } from "react-redux"; // Import Redux Provider
 import { store } from "./store/store";
 import { Providers } from "@/components/providers";
-
+import { NavbarWrapper } from "@/components/navbarWrapper"; // Import the NavbarWrapper component
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,7 +28,7 @@ export default function RootLayout({
         <Providers>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
             <SidebarProvider>
-              <Navbar />
+              <NavbarWrapper />
               {children}
             </SidebarProvider>
           </ThemeProvider>
