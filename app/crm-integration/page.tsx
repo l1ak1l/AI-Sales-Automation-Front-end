@@ -1,6 +1,8 @@
 "use client"
 
 import type React from "react"
+import { useSelector } from 'react-redux';
+import { RootState } from "@/app/store/store";
 
 import { useState } from "react"
 import { DashboardLayout } from "@/components/dashboard-layout"
@@ -37,6 +39,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { ApiService } from "@/lib/apis/crmApis"
+import { readFile } from "fs/promises"
 
 // Dummy data for CRM platforms
 const crmPlatforms = [
@@ -69,8 +73,21 @@ const extractionLogs = [
   { id: 6, timestamp: "2025-03-07 11:31:22", message: "Successfully extracted 189 contacts", type: "success" },
 ]
 
+// Define an interface for the uploaded file object
+interface UploadedFile {
+  id: number;
+  name: string;
+  type: string;
+  size: string;
+  uploadDate: string;
+  status: string;
+  records: number;
+  progress: number;
+  content: any; // Adjust the type based on the actual content structure
+}
+
 // Dummy data for uploaded files
-const uploadedFiles = []
+const uploadedFiles: UploadedFile[] = []
 
 // Function to get the appropriate icon based on file type
 const getFileIcon = (type: string) => {
@@ -140,6 +157,8 @@ const getStatusBadge = (status: string) => {
 }
 
 export default function CRMIntegrationPage() {
+  const user = useSelector((state: RootState) => state.auth.user);
+
   // Remove the true parameter to not require authentication
   const { isAuthenticated } = useAuth()
   const router = useRouter()
@@ -207,128 +226,190 @@ export default function CRMIntegrationPage() {
     }
   }
 
-  // Handle file upload
-  const handleFileUpload = () => {
+  // Update handleFileUpload function to properly read CSV/Excel files
+  const handleFileUpload = async () => {
     if (!selectedFile) return
-
+  
     setIsUploading(true)
     setUploadProgress(0)
-
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          return 100
+  
+    const fileReader = new FileReader()
+    fileReader.onload = async (e) => {
+      try {
+        const content = e.target?.result as string
+        let jsonData: any
+  
+        // Parse CSV content to JSON
+        if (selectedFile.type === 'text/csv') {
+          jsonData = parseCSV(content)
+        } else if (selectedFile.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                  selectedFile.type === 'application/vnd.ms-excel') {
+          // For Excel files, you'll need to use a library like xlsx
+          // This is just a placeholder for now
+          jsonData = content
         }
-        return prev + 10
-      })
-    }, 300)
-
-    // Simulate upload completion
-    setTimeout(() => {
-      clearInterval(interval)
-      setUploadProgress(100)
-
-      // Add the file to the list
-      const fileType = selectedFile.name.split(".").pop() || ""
-      const newFile = {
-        id: files.length + 1,
-        name: selectedFile.name,
-        type: fileType,
-        size: `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`,
-        uploadDate: new Date().toISOString().split("T")[0],
-        status: "Uploaded",
-        destination: "",
-        records: 0,
-        progress: 0,
-      }
-
-      setFiles([newFile, ...files])
-
-      // Add a log entry
-      const newLog = {
-        id: logs.length + 1,
-        timestamp: new Date().toISOString().replace("T", " ").substring(0, 19),
-        message: `Uploaded file ${selectedFile.name}`,
-        type: "info",
-      }
-      setLogs([newLog, ...logs])
-
-      // Reset form
-      setSelectedFile(null)
-      setIsUploading(false)
-
-      // Reset the file input
-      const fileInput = document.getElementById("file-upload") as HTMLInputElement
-      if (fileInput) fileInput.value = ""
-    }, 3000)
-  }
-
-  // Add a function to start processing a file
-  const startProcessing = (fileId: number) => {
-    // Find the file and update its status
-    setFiles(
-      files.map((file) => {
-        if (file.id === fileId) {
-          // Add a log entry
+  
+        // Simulate upload progress
+        const interval = setInterval(() => {
+          setUploadProgress((prev) => {
+            if (prev >= 100) {
+              clearInterval(interval)
+              return 100
+            }
+            return prev + 10
+          })
+        }, 300)
+  
+        setTimeout(() => {
+          clearInterval(interval)
+          setUploadProgress(100)
+  
+          // Add the file to the list with the parsed JSON content
+          const newFile = {
+            id: files.length + 1,
+            name: selectedFile.name,
+            type: selectedFile.name.split('.').pop() || '',
+            size: `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`,
+            uploadDate: new Date().toISOString().split('T')[0],
+            status: 'Uploaded',
+            records: Array.isArray(jsonData) ? jsonData.length : 0,
+            progress: 0,
+            content: jsonData // Store the parsed JSON content
+          }
+  
+          setFiles([newFile, ...files])
+          setSelectedFile(null)
+          setIsUploading(false)
+  
+          // Reset file input
+          const fileInput = document.getElementById('file-upload') as HTMLInputElement
+          if (fileInput) fileInput.value = ''
+  
+          // Add log entry
           const newLog = {
             id: logs.length + 1,
-            timestamp: new Date().toISOString().replace("T", " ").substring(0, 19),
-            message: `Started processing file ${file.name}`,
-            type: "info",
+            timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+            message: `Uploaded file ${selectedFile.name}`,
+            type: 'info'
           }
           setLogs([newLog, ...logs])
-
-          return { ...file, status: "Processing", progress: 0 }
-        }
-        return file
-      }),
-    )
-
-    // Simulate processing progress
-    let progress = 0
-    const interval = setInterval(() => {
-      progress += 5
-      if (progress >= 100) {
-        clearInterval(interval)
-
-        // Update the file status to Processed when done
-        setFiles(
-          files.map((file) => {
-            if (file.id === fileId) {
-              // Add a log entry
-              const newLog = {
-                id: logs.length + 1,
-                timestamp: new Date().toISOString().replace("T", " ").substring(0, 19),
-                message: `Completed processing file ${file.name}`,
-                type: "success",
-              }
-              setLogs([newLog, ...logs])
-
-              return {
-                ...file,
-                status: "Processed",
-                progress: 100,
-                records: Math.floor(Math.random() * 1000) + 100, // Random number of records
-              }
-            }
-            return file
-          }),
-        )
-      } else {
-        // Update progress
-        setFiles(
-          files.map((file) => {
-            if (file.id === fileId) {
-              return { ...file, progress }
-            }
-            return file
-          }),
-        )
+        }, 3000)
+      } catch (error) {
+        console.error('Error processing file:', error)
+        alert('Error processing file. Please make sure it is a valid CSV or Excel file.')
+        setIsUploading(false)
       }
-    }, 300)
+    }
+  
+    fileReader.onerror = () => {
+      setIsUploading(false)
+      alert('Error reading file')
+    }
+  
+    fileReader.readAsText(selectedFile)
   }
+  
+  // Helper function to parse CSV to JSON
+  const parseCSV = (csv: string) => {
+    const lines = csv.split('\n')
+    const headers = lines[0].split(',').map(header => header.trim())
+    const result = []
+  
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue // Skip empty lines
+      
+      const currentLine = lines[i].split(',').map(cell => cell.trim())
+      const obj: { [key: string]: string } = {}
+      
+      for (let j = 0; j < headers.length; j++) {
+        obj[headers[j]] = currentLine[j]
+      }
+      
+      result.push(obj)
+    }
+  
+    return result
+  }
+  
+  // Add a function to start processing a file
+  const startProcessing = async (fileId: number) => {
+    const file = files.find(file => file.id === fileId)
+    if (!file) return
+  
+    setFiles(
+      files.map(f => {
+        if (f.id === fileId) {
+          return { ...f, status: 'Processing', progress: 0 }
+        }
+        return f
+      })
+    )
+  
+    try {
+      // Send only the parsed content to the backend
+      const response = await ApiService.sendUserData({
+        user_id: user?.id || 6921,
+        dataset: file.content, // This is already in JSON format
+        file_name: file.name
+      })
+  
+      if (response.success) {
+        // Handle successful processing
+        setFiles(
+          files.map(f => {
+            if (f.id === fileId) {
+              return {
+                ...f,
+                status: 'Processed',
+                progress: 100,
+                records: Array.isArray(file.content) ? file.content.length : 0
+              }
+            }
+            return f
+          })
+        )
+  
+        // Add success log
+        setLogs([
+          {
+            id: logs.length + 1,
+            timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+            message: `Successfully processed ${file.name}`,
+            type: 'success'
+          },
+          ...logs
+        ])
+      } else {
+        throw new Error(response.error || 'Processing failed')
+      }
+    } catch (error) {
+      console.error('Processing error:', error)
+      
+      // Update file status to failed
+      setFiles(
+        files.map(f => {
+          if (f.id === fileId) {
+            return { ...f, status: 'Failed', progress: 0 }
+          }
+          return f
+        })
+      )
+  
+      // Add error log
+      setLogs([
+        {
+          id: logs.length + 1,
+          timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+          message: `Failed to process ${file.name}: ${error}`,
+          type: 'error'
+        },
+        ...logs
+      ])
+  
+      alert(`Failed to process file: ${error}`)
+    }
+  }
+  
 
   return (
     <DashboardLayout>
@@ -431,7 +512,7 @@ export default function CRMIntegrationPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Original Field</TableHead>
-                      <TableHead>Standardized Field</TableHead>
+                      <TableHead>Standardized Field</Head>
                       <TableHead>Override</TableHead>
                     </TableRow>
                   </TableHeader>

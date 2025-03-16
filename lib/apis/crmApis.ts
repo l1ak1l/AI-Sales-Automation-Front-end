@@ -10,14 +10,14 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 seconds timeout
+  timeout: 200000, // 30 seconds timeout
 });
 
 // Interface definitions based on your API structure
 interface UserData {
   user_id: string | number;
   dataset: any;
-  filen_name: string; // Note: there's a typo in your original code (filen_name vs file_name)
+  file_name: string; // Note: there's a typo in your original code (filen_name vs file_name)
 }
 
 interface ApiResponse<T = any> {
@@ -120,7 +120,7 @@ export const ApiService = {
       if (!userData.dataset) {
         return { success: false, error: 'Dataset is required' };
       }
-      if (!userData.filen_name) {
+      if (!userData.file_name) {
         return { success: false, error: 'File name is required' };
       }
 

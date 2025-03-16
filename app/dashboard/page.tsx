@@ -1,7 +1,5 @@
 "use client"
 
-// I'll replace the entire content of the dashboard page with a new layout that focuses on CRM data
-
 import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -13,100 +11,23 @@ import { Badge } from "@/components/ui/badge"
 import { Search, ArrowUpDown, Calendar, RefreshCw } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ApiService } from "@/lib/apis/crmApis"
+import { useSelector } from "react-redux"
+import { RootState } from "@/app/store/store";
 
-// Dummy data for CRM contacts
-const crmData = [
-  {
-    id: 1,
-    name: "John Smith",
-    email: "john.smith@example.com",
-    phone: "+1 (555) 123-4567",
-    company: "Acme Inc.",
-    status: "Lead",
-    lastContact: "2025-03-15",
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    email: "sarah.j@techcorp.com",
-    phone: "+1 (555) 987-6543",
-    company: "TechCorp",
-    status: "Customer",
-    lastContact: "2025-03-14",
-  },
-  {
-    id: 3,
-    name: "Michael Brown",
-    email: "mbrown@globalsolutions.com",
-    phone: "+1 (555) 456-7890",
-    company: "Global Solutions",
-    status: "Lead",
-    lastContact: "2025-03-12",
-  },
-  {
-    id: 4,
-    name: "Emily Davis",
-    email: "emily@innovate.com",
-    phone: "+1 (555) 789-0123",
-    company: "Innovate LLC",
-    status: "Prospect",
-    lastContact: "2025-03-10",
-  },
-  {
-    id: 5,
-    name: "David Wilson",
-    email: "david@firstchoice.com",
-    phone: "+1 (555) 321-6547",
-    company: "First Choice",
-    status: "Customer",
-    lastContact: "2025-03-08",
-  },
-  {
-    id: 6,
-    name: "Jennifer Lee",
-    email: "jlee@startech.com",
-    phone: "+1 (555) 654-3210",
-    company: "StarTech",
-    status: "Lead",
-    lastContact: "2025-03-07",
-  },
-  {
-    id: 7,
-    name: "Robert Garcia",
-    email: "rgarcia@nexus.com",
-    phone: "+1 (555) 234-5678",
-    company: "Nexus Systems",
-    status: "Prospect",
-    lastContact: "2025-03-05",
-  },
-  {
-    id: 8,
-    name: "Lisa Martinez",
-    email: "lmartinez@apex.com",
-    phone: "+1 (555) 876-5432",
-    company: "Apex Corporation",
-    status: "Customer",
-    lastContact: "2025-03-03",
-  },
-  {
-    id: 9,
-    name: "James Taylor",
-    email: "jtaylor@summit.com",
-    phone: "+1 (555) 345-6789",
-    company: "Summit Enterprises",
-    status: "Lead",
-    lastContact: "2025-03-01",
-  },
-  {
-    id: 10,
-    name: "Patricia White",
-    email: "pwhite@horizon.com",
-    phone: "+1 (555) 987-1234",
-    company: "Horizon Inc.",
-    status: "Prospect",
-    lastContact: "2025-02-28",
-  },
-]
+// Define an interface for the contact data
+interface Contact {
+  id: number
+  name: string
+  email: string
+  phone: string
+  company: string
+  status: string
+  lastContact: string
+}
+
+// Static variable to store CRM data
+let staticCrmData: Contact[] = []
 
 // Function to get the appropriate status badge
 const getStatusBadge = (status: string) => {
@@ -135,6 +56,7 @@ const getStatusBadge = (status: string) => {
 }
 
 export default function DashboardPage() {
+  const user = useSelector((state: RootState) => state.auth.user)
   const { isAuthenticated } = useAuth()
   const [isLoaded, setIsLoaded] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -142,15 +64,59 @@ export default function DashboardPage() {
   const [sortField, setSortField] = useState<string>("lastContact")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 5
+  const [crmData, setCrmData] = useState<Contact[]>(staticCrmData)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const itemsPerPage = 20
 
-  // Animation to simulate data loading
+  // Add fetchUserData outside of useEffect for reusability
+  const fetchUserData = async () => {
+    setIsLoading(true)
+    setError(null)
+  
+    try {
+      const timestamp = new Date().getTime()
+      const response = await ApiService.getMappedUserData(6921)
+      
+      if (response.success && response.data?.data?.data) {
+        const transformedData: Contact[] = response.data.data.data.map((item: any, index: number) => ({
+          id: index, // Use incremental index for unique key
+          name: item.Name || "Unknown",
+          email: item.Email || "",
+          phone: item.Contact || "",
+          company: item.Organization || "",
+          status: item.Status || "Lead",
+          lastContact: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : 
+                     new Date().toISOString().split('T')[0]
+        }))
+        console.log("transformed")
+        setCrmData(transformedData)
+        staticCrmData = transformedData // Update static variable
+        setIsLoaded(true)
+      } else {
+        throw new Error(response.error || "Failed to fetch data")
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred while fetching data")
+      console.error("Error fetching user data:", err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+  
+  // Add refresh handler
+  const handleRefresh = async () => {
+    await fetchUserData()
+  }
+  
+  // Initial data fetch
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (user?.id && staticCrmData.length === 0) {
+      fetchUserData()
+    } else {
       setIsLoaded(true)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [])
+    }
+  }, [user?.id]) // Remove fetchUserData from dependencies since it's now outside
 
   // Filter and sort data
   const filteredData = crmData
@@ -236,188 +202,214 @@ export default function DashboardPage() {
             <p className="text-muted-foreground">View and manage your CRM data</p>
           </div>
           <div className="mt-4 md:mt-0">
-            <Button className="flex items-center gap-2">
-              <RefreshCw className="h-4 w-4" />
-              Refresh Data
+            <Button 
+              className="flex items-center gap-2" 
+              onClick={handleRefresh}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              {isLoading ? 'Refreshing...' : 'Refresh Data'}
             </Button>
           </div>
         </div>
 
         <motion.div initial="hidden" animate={isLoaded ? "visible" : "hidden"} variants={containerVariants}>
-          <motion.div variants={itemVariants}>
+          {isLoading ? (
             <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>Data Upload Statistics</CardTitle>
-                <CardDescription>Summary of your CRM data</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="bg-blue-50 rounded-lg p-4 flex flex-col">
-                    <span className="text-blue-500 text-sm font-medium">Total Contacts</span>
-                    <span className="text-2xl font-bold mt-1">{crmData.length}</span>
-                    <span className="text-sm text-muted-foreground mt-1">From all sources</span>
-                  </div>
-
-                  <div className="bg-green-50 rounded-lg p-4 flex flex-col">
-                    <span className="text-green-500 text-sm font-medium">Customers</span>
-                    <span className="text-2xl font-bold mt-1">
-                      {crmData.filter((item) => item.status === "Customer").length}
-                    </span>
-                    <span className="text-sm text-muted-foreground mt-1">Active accounts</span>
-                  </div>
-
-                  <div className="bg-amber-50 rounded-lg p-4 flex flex-col">
-                    <span className="text-amber-500 text-sm font-medium">Prospects</span>
-                    <span className="text-2xl font-bold mt-1">
-                      {crmData.filter((item) => item.status === "Prospect").length}
-                    </span>
-                    <span className="text-sm text-muted-foreground mt-1">In sales pipeline</span>
-                  </div>
-
-                  <div className="bg-indigo-50 rounded-lg p-4 flex flex-col">
-                    <span className="text-indigo-500 text-sm font-medium">Leads</span>
-                    <span className="text-2xl font-bold mt-1">
-                      {crmData.filter((item) => item.status === "Lead").length}
-                    </span>
-                    <span className="text-sm text-muted-foreground mt-1">New opportunities</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={itemVariants}>
-            <Card className="mb-6">
-              <CardHeader className="pb-3">
-                <CardTitle>CRM Data</CardTitle>
-                <CardDescription>Browse and manage your contact data from all integrated sources</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col md:flex-row gap-4 mb-6">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search contacts..."
-                      className="pl-8"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Select
-                      value={statusFilter || "all"}
-                      onValueChange={(value) => setStatusFilter(value === "all" ? null : value)}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Filter by status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        {statuses.map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {status}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>
-                          <Button
-                            variant="ghost"
-                            className="flex items-center gap-1 p-0 font-medium"
-                            onClick={() => toggleSort("name")}
-                          >
-                            Name
-                            <ArrowUpDown className="h-3 w-3" />
-                          </Button>
-                        </TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>
-                          <Button
-                            variant="ghost"
-                            className="flex items-center gap-1 p-0 font-medium"
-                            onClick={() => toggleSort("company")}
-                          >
-                            Company
-                            <ArrowUpDown className="h-3 w-3" />
-                          </Button>
-                        </TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>
-                          <Button
-                            variant="ghost"
-                            className="flex items-center gap-1 p-0 font-medium"
-                            onClick={() => toggleSort("lastContact")}
-                          >
-                            Last Contact
-                            <ArrowUpDown className="h-3 w-3" />
-                          </Button>
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedData.length > 0 ? (
-                        paginatedData.map((contact) => (
-                          <TableRow key={contact.id} className="group">
-                            <TableCell className="font-medium">{contact.name}</TableCell>
-                            <TableCell>{contact.email}</TableCell>
-                            <TableCell>{contact.phone}</TableCell>
-                            <TableCell>{contact.company}</TableCell>
-                            <TableCell>{getStatusBadge(contact.status)}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                                {new Date(contact.lastContact).toLocaleDateString()}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={6} className="h-24 text-center">
-                            No contacts found matching your criteria.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-              <CardFooter className="flex items-center justify-between border-t px-6 py-4">
-                <div className="text-sm text-muted-foreground">
-                  Showing <strong>{paginatedData.length}</strong> of <strong>{filteredData.length}</strong> contacts
-                </div>
+              <CardContent className="flex items-center justify-center h-32">
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </Button>
-                  <div className="text-sm font-medium">
-                    Page {currentPage} of {totalPages || 1}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(currentPage + 1)}
-                    disabled={currentPage === totalPages || totalPages === 0}
-                  >
-                    Next
-                  </Button>
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                  <p>Loading CRM data...</p>
                 </div>
-              </CardFooter>
+              </CardContent>
             </Card>
-          </motion.div>
+          ) : error ? (
+            <Card className="mb-8">
+              <CardContent className="flex items-center justify-center h-32">
+                <div className="text-red-500">{error}</div>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <motion.div variants={itemVariants}>
+                <Card className="mb-8">
+                  <CardHeader>
+                    <CardTitle>Data Upload Statistics</CardTitle>
+                    <CardDescription>Summary of your CRM data</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="bg-blue-50 rounded-lg p-4 flex flex-col">
+                        <span className="text-blue-500 text-sm font-medium">Total Contacts</span>
+                        <span className="text-2xl font-bold mt-1">{crmData.length}</span>
+                        <span className="text-sm text-muted-foreground mt-1">From all sources</span>
+                      </div>
+
+                      <div className="bg-green-50 rounded-lg p-4 flex flex-col">
+                        <span className="text-green-500 text-sm font-medium">Customers</span>
+                        <span className="text-2xl font-bold mt-1">
+                          {crmData.filter((item) => item.status === "Customer").length}
+                        </span>
+                        <span className="text-sm text-muted-foreground mt-1">Active accounts</span>
+                      </div>
+
+                      <div className="bg-amber-50 rounded-lg p-4 flex flex-col">
+                        <span className="text-amber-500 text-sm font-medium">Prospects</span>
+                        <span className="text-2xl font-bold mt-1">
+                          {crmData.filter((item) => item.status === "Prospect").length}
+                        </span>
+                        <span className="text-sm text-muted-foreground mt-1">In sales pipeline</span>
+                      </div>
+
+                      <div className="bg-indigo-50 rounded-lg p-4 flex flex-col">
+                        <span className="text-indigo-500 text-sm font-medium">Leads</span>
+                        <span className="text-2xl font-bold mt-1">
+                          {crmData.filter((item) => item.status === "Lead").length}
+                        </span>
+                        <span className="text-sm text-muted-foreground mt-1">New opportunities</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
+                <Card className="mb-6">
+                  <CardHeader className="pb-3">
+                    <CardTitle>CRM Data</CardTitle>
+                    <CardDescription>Browse and manage your contact data from all integrated sources</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col md:flex-row gap-4 mb-6">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search contacts..."
+                          className="pl-8"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Select
+                          value={statusFilter || "all"}
+                          onValueChange={(value) => setStatusFilter(value === "all" ? null : value)}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Filter by status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            {statuses.map((status) => (
+                              <SelectItem key={status} value={status}>
+                                {status}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>
+                              <Button
+                                variant="ghost"
+                                className="flex items-center gap-1 p-0 font-medium"
+                                onClick={() => toggleSort("name")}
+                              >
+                                Name
+                                <ArrowUpDown className="h-3 w-3" />
+                              </Button>
+                            </TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Phone</TableHead>
+                            <TableHead>
+                              <Button
+                                variant="ghost"
+                                className="flex items-center gap-1 p-0 font-medium"
+                                onClick={() => toggleSort("company")}
+                              >
+                                Company
+                                <ArrowUpDown className="h-3 w-3" />
+                              </Button>
+                            </TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>
+                              <Button
+                                variant="ghost"
+                                className="flex items-center gap-1 p-0 font-medium"
+                                onClick={() => toggleSort("lastContact")}
+                              >
+                                Last Contact
+                                <ArrowUpDown className="h-3 w-3" />
+                              </Button>
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedData.length > 0 ? (
+                            paginatedData.map((contact, index) => (
+                              <TableRow key={contact.id} className="group">
+                                <TableCell className="font-medium">{contact.name}</TableCell>
+                                <TableCell>{contact.email}</TableCell>
+                                <TableCell>{contact.phone}</TableCell>
+                                <TableCell>{contact.company}</TableCell>
+                                <TableCell>{getStatusBadge(contact.status)}</TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-1">
+                                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                    {new Date(contact.lastContact).toLocaleDateString()}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={6} className="h-24 text-center">
+                                {searchQuery || statusFilter ? 
+                                  "No contacts found matching your criteria." :
+                                  "No CRM data available."
+                                }
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex items-center justify-between border-t px-6 py-4">
+                    <div className="text-sm text-muted-foreground">
+                      Showing <strong>{paginatedData.length}</strong> of <strong>{filteredData.length}</strong> contacts
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={currentPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <div className="text-sm font-medium">
+                        Page {currentPage} of {totalPages || 1}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={currentPage === totalPages || totalPages === 0}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+            </>
+          )}
         </motion.div>
       </div>
     </DashboardLayout>

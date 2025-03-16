@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FcGoogle } from "react-icons/fc";
 
+
 export default function LoginPage() {
   const router=useRouter()
   const dispatch = useDispatch();
@@ -46,7 +47,7 @@ export default function LoginPage() {
           token: data.token 
         }));
         
-        router.push('/reporting');
+        router.push('/dashboard');
 
         // Handle successful login: store the token or redirect
       } else {

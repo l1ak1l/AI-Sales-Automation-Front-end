@@ -1,13 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"  // Add this import
-
+import { useRouter } from "next/navigation"
+import { useSelector } from 'react-redux';
 import { usePathname } from "next/navigation"
 import { BarChart3, Database, Headphones, Home, Settings, LogOut, Bell, HelpCircle } from "lucide-react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { RootState } from "@/app/store/store";
 
 import {
   Sidebar,
@@ -26,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export function DashboardSidebar() {
+  const router = useRouter()
   const pathname = usePathname()
   const [hasAnimated, setHasAnimated] = useState(false)
   
@@ -33,6 +34,8 @@ export function DashboardSidebar() {
     // Set animation state to true after first render
     setHasAnimated(true)
   }, [])
+  
+  const userState = useSelector((state: RootState) => state.auth.user);
 
   // Navigation items for the sidebar
   const mainNavItems = [
@@ -97,7 +100,14 @@ export function DashboardSidebar() {
     }
   }
 
-  const router=useRouter()
+  const handleNavigation = (href: string) => {
+    router.push(href)
+  }
+
+  const handleLogout = () => {
+    // Add logout logic here if needed
+    router.push("/login") // Redirect to login page after logout
+  }
 
   return (
     <Sidebar className="border-r border-gray-200 bg-gradient-to-b from-white to-gray-50 shadow-sm w-72">
@@ -108,7 +118,6 @@ export function DashboardSidebar() {
           variants={logoVariants}
         >
           <motion.div 
-            
             className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-2xl shadow-md"
             // initial={!hasAnimated ? { opacity: 0, y: -20 } : false}
             // animate={!hasAnimated ? { opacity: 1, y: 0 } : false}
@@ -117,11 +126,11 @@ export function DashboardSidebar() {
             A
           </motion.div>
           <motion.h2 
-            className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent"
+            className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent cursor-pointer"
             initial={!hasAnimated ? { opacity: 0, x: -20 } : false}
             animate={!hasAnimated ? { opacity: 1, x: 0 } : false}
             transition={{ duration: 0.5, delay: 0.2 }}
-            onClick={()=>router.push("./")}
+            onClick={() => router.push("/")}
           >
             AI Sales
           </motion.h2>
@@ -134,7 +143,7 @@ export function DashboardSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <TooltipProvider>
-                {mainNavItems.map((item, index) => (
+                {mainNavItems.map((item) => (
                   <SidebarMenuItem key={item.title} className="mb-5">
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -154,7 +163,10 @@ export function DashboardSidebar() {
                                 : "hover:bg-gray-100 hover:shadow-sm"
                             )}
                           >
-                            <Link href={item.href} className="flex items-center">
+                            <div 
+                              className="flex items-center cursor-pointer"
+                              onClick={() => handleNavigation(item.href)}
+                            >
                               <item.icon className={cn(
                                 "mr-5 h-7 w-7 transition-transform duration-300",
                                 item.isActive ? "text-primary-foreground" : "text-gray-600"
@@ -165,7 +177,7 @@ export function DashboardSidebar() {
                               )}>
                                 {item.title}
                               </span>
-                            </Link>
+                            </div>
                           </SidebarMenuButton>
                         </motion.div>
                       </TooltipTrigger>
@@ -193,7 +205,10 @@ export function DashboardSidebar() {
                   variants={menuItemVariants}
                   className="w-full rounded-xl overflow-hidden"
                 >
-                  <SidebarMenuButton className="py-5 px-5 rounded-xl hover:bg-gray-100 text-lg transition-all duration-300">
+                  <SidebarMenuButton 
+                    className="py-5 px-5 rounded-xl hover:bg-gray-100 text-lg transition-all duration-300"
+                    onClick={() => handleNavigation("/notifications")}
+                  >
                     <Bell className="mr-5 h-7 w-7 text-gray-600" />
                     <span className="font-medium text-gray-700">Notifications</span>
                     <motion.span 
@@ -222,7 +237,7 @@ export function DashboardSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <TooltipProvider>
-                {accountNavItems.map((item, index) => (
+                {accountNavItems.map((item) => (
                   <SidebarMenuItem key={item.title} className="mb-4">
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -242,10 +257,13 @@ export function DashboardSidebar() {
                                 : "hover:bg-gray-100"
                             )}
                           >
-                            <Link href={item.href} className="flex items-center">
+                            <div 
+                              className="flex items-center cursor-pointer"
+                              onClick={() => handleNavigation(item.href)}
+                            >
                               <item.icon className="mr-5 h-7 w-7 text-gray-600" />
                               <span className="font-medium text-gray-700">{item.title}</span>
-                            </Link>
+                            </div>
                           </SidebarMenuButton>
                         </motion.div>
                       </TooltipTrigger>
@@ -276,13 +294,14 @@ export function DashboardSidebar() {
               <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600 text-white text-xl">JD</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-lg font-semibold text-gray-800">John Doe</p>
-              <p className="text-base text-gray-500 truncate">john@example.com</p>
+              <p className="text-lg font-semibold text-gray-800">{userState ? userState.name : "Hamza The Great"}</p>
+              <p className="text-base text-gray-500 truncate">{userState ? userState.email : "Email"}</p>
             </div>
             <motion.button 
               className="text-gray-500 hover:text-red-500 p-3 rounded-lg hover:bg-gray-100"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
+              onClick={handleLogout}
             >
               <LogOut className="h-6 w-6" />
             </motion.button>
