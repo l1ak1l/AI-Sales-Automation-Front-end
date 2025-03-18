@@ -1,0 +1,119 @@
+// reportingService.ts
+import axios, { type AxiosError, type AxiosResponse } from "axios"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1"
+
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: { "Content-Type": "application/json" },
+  timeout: 20000,
+})
+
+// Chat-specific interfaces
+interface ChatRequest {
+  user_id: string | number
+  query: string
+  conversation_id?: string // Optional for continuing conversations
+  context?: Record<string, any> // Additional context parameters
+}
+
+interface ChatResponse {
+  response: string
+  conversation_id?: string
+  timestamp: string
+  confidence_score?: number
+}
+
+// Updated AnalysisReport interface (maintained from previous implementation)
+interface AnalysisReport {
+  schema_info: any
+  insights: any
+  chart_requirements: any
+  raw_data: any
+  executive_summary: any
+}
+
+interface ApiResponse<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+  message?: string
+}
+
+// Unified error handler
+const handleApiError = (error: unknown): ApiResponse => {
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosError<any>
+
+    if (!axiosError.response) {
+      return { success: false, error: "Network error. Please check your connection." }
+    }
+
+    const status = axiosError.response.status
+    const errorData = axiosError.response.data
+
+    switch (status) {
+      case 400:
+        return { success: false, error: errorData?.detail || "Invalid request format" }
+      case 429:
+        return { success: false, error: "Too many requests. Please wait before trying again." }
+      case 500:
+        return { success: false, error: "Server error processing your request" }
+      default:
+        return { success: false, error: `Error ${status}: ${errorData?.detail || axiosError.message}` }
+    }
+  }
+  return { success: false, error: error instanceof Error ? error.message : "Unknown error occurred" }
+}
+
+// Response handler remains generic
+const handleApiResponse = <T>(response: AxiosResponse<T>): ApiResponse<T> => ({
+  success: true,
+  data: response.data,
+  message: 'Request processed successfully',
+});
+
+export const ReportingService = {
+  /**
+   * Get complete analysis report
+   */
+  getAnalysis: async (userId: string | number): Promise<ApiResponse<AnalysisReport>> => {
+    try {
+      if (!userId) return { success: false, error: 'User ID is required' };
+      const response = await apiClient.get<AnalysisReport>('/analyze', { params: { user_id: userId } });
+      return handleApiResponse(response);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  /**
+   * Handle chat conversation with the AI
+   * @param chatRequest - The chat request parameters
+   * @returns Promise with chatbot response
+   */
+  handleChat: async (chatRequest: ChatRequest): Promise<ApiResponse<ChatResponse>> => {
+    try {
+      // Validate required fields
+      if (!chatRequest.user_id) return { success: false, error: 'User ID is required' };
+      if (!chatRequest.query?.trim()) return { success: false, error: 'Query cannot be empty' };
+
+      const response = await apiClient.post<ChatResponse>('/chat', chatRequest);
+      
+      return {
+        ...handleApiResponse(response),
+        message: 'Chat response received',
+      };
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  // Helper methods remain unchanged
+  isSuccess: <T>(apiResponse: ApiResponse<T>): boolean => apiResponse.success,
+  getData: <T>(apiResponse: ApiResponse<T>): T | null => apiResponse.success && apiResponse.data ? apiResponse.data : null,
+};
+
+// Export type definitions for external use
+export type { ChatRequest, ChatResponse, AnalysisReport };
+
