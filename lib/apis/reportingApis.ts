@@ -77,10 +77,10 @@ export const ReportingService = {
   /**
    * Get complete analysis report
    */
-  getAnalysis: async (userId: string | number): Promise<ApiResponse<AnalysisReport>> => {
+  getAnalysis: async (): Promise<ApiResponse<AnalysisReport>> => {
     try {
-      if (!userId) return { success: false, error: 'User ID is required' };
-      const response = await apiClient.get<AnalysisReport>('/analyze', { params: { user_id: userId } });
+      
+      const response = await apiClient.get<AnalysisReport>('/analyze');
       return handleApiResponse(response);
     } catch (error) {
       return handleApiError(error);
@@ -95,7 +95,7 @@ export const ReportingService = {
   handleChat: async (chatRequest: ChatRequest): Promise<ApiResponse<ChatResponse>> => {
     try {
       // Validate required fields
-      if (!chatRequest.user_id) return { success: false, error: 'User ID is required' };
+      
       if (!chatRequest.query?.trim()) return { success: false, error: 'Query cannot be empty' };
 
       const response = await apiClient.post<ChatResponse>('/chat', chatRequest);
@@ -116,4 +116,3 @@ export const ReportingService = {
 
 // Export type definitions for external use
 export type { ChatRequest, ChatResponse, AnalysisReport };
-

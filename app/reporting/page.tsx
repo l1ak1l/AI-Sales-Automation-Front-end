@@ -93,13 +93,13 @@ export default function DashboardPage() {
     setError(null)
 
     try {
-      const userId = user?.id || "6921" // Fallback to a default ID
+       // Fallback to a default ID
 
       // If CSV file is selected, read and send it
       if (selectedFile && activeTab === "csv") {
         const formData = new FormData()
         formData.append("file", selectedFile)
-        formData.append("user_id", userId.toString())
+        
 
         // Send the CSV file to the analyze endpoint
         const response = await fetch(
@@ -120,7 +120,7 @@ export default function DashboardPage() {
       } else {
         // For other connection types (placeholder for now)
         // In a real implementation, you would handle SQL, S3, or Blob connections here
-        const response = await ReportingService.getAnalysis(userId)
+        const response = await ReportingService.getAnalysis()
 
         if (ReportingService.isSuccess(response)) {
           const data = ReportingService.getData(response)
@@ -778,4 +778,3 @@ export default function DashboardPage() {
     </DashboardLayout>
   )
 }
-
