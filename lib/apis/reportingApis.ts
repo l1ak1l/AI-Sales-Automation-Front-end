@@ -6,7 +6,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
-  timeout: 20000,
+  
+  timeout: 2000000,
 })
 
 // Chat-specific interfaces
@@ -116,3 +117,23 @@ export const ReportingService = {
 
 // Export type definitions for external use
 export type { ChatRequest, ChatResponse, AnalysisReport };
+
+// Helper function to format chat response
+export const formatChatResponse = (text: string): string => {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "<span class='text-xl font-bold text-black'>$1</span>") // Convert **text** to large bold black text
+    .replace(/\*(.*?)\*/g, "<span class='text-lg font-bold text-black'>$1</span>") // Convert *text* to medium bold black text
+    .replace(/\n/g, "<br />") // Convert newlines to <br />
+    .replace(/\n\s*\n/g, "<br /><br />") // Convert double newlines to double <br />
+    .replace(/\|(.*?)\|/g, (match: string, content: string) => {
+      // Check if this is a table row
+      if (content.includes("---")) {
+        return "" // Skip the separator row
+      }
+      // Convert table row to HTML
+      const cells = content.split("|").map((cell: string) => cell.trim())
+      return `<tr>${cells.map((cell: string) => `<td class='px-4 py-2'>${cell}</td>`).join("")}</tr>`
+    })
+    .replace(/(<tr>.*<\/tr>)/g, '<table class="min-w-full divide-y divide-gray-200 my-4 border"><tbody>$1</tbody></table>') // Wrap table rows in table tags
+    .trim()
+}
