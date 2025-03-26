@@ -217,7 +217,7 @@ const formatInlineContent = (text: string): React.ReactNode => {
 
         // Send the CSV file to the analyze endpoint
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1"}/analyze`,
+          `${"http://127.0.0.1:3001/api/v1"}/analyze`,
           {
             method: "POST",
             body: formData,
