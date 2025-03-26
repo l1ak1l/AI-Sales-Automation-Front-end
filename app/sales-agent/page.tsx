@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,76 +14,33 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Check, Filter, Phone } from "lucide-react"
+import { Check, Filter, RefreshCw } from "lucide-react"
 
 import { useAuth } from "@/hooks/useAuth"
 import { useRouter } from "next/navigation"
+import { ApiService } from "@/lib/apis/crmApis"
+import { AlertCircle, CheckCircle, PhoneCall, PhoneOff, Users } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Slider } from "@/components/ui/slider"
 
-// Dummy data for leads
-const dummyLeads = [
-  {
-    id: 1,
-    name: "John Smith",
-    company: "Acme Inc",
-    email: "john@acme.com",
-    phone: "+1 555-123-4567",
-    engagementLevel: "High",
-    status: "New",
-    priorityScore: 92,
-    lastContact: "2025-03-01",
-    notes: "Interested in our enterprise plan. Has budget approval.",
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    company: "TechCorp",
-    email: "sarah@techcorp.com",
-    phone: "+1 555-987-6543",
-    engagementLevel: "Medium",
-    status: "In Progress",
-    priorityScore: 78,
-    lastContact: "2025-03-03",
-    notes: "Requested a follow-up demo next week.",
-  },
-  {
-    id: 3,
-    name: "Michael Brown",
-    company: "Global Solutions",
-    email: "michael@globalsolutions.com",
-    phone: "+1 555-456-7890",
-    engagementLevel: "Low",
-    status: "New",
-    priorityScore: 45,
-    lastContact: "2025-03-05",
-    notes: "Initial contact made, waiting for response.",
-  },
-  {
-    id: 4,
-    name: "Emily Davis",
-    company: "Innovate LLC",
-    email: "emily@innovate.com",
-    phone: "+1 555-789-0123",
-    engagementLevel: "High",
-    status: "Qualified",
-    priorityScore: 88,
-    lastContact: "2025-03-02",
-    notes: "Ready for proposal. Decision expected within 2 weeks.",
-  },
-  {
-    id: 5,
-    name: "David Wilson",
-    company: "First Choice",
-    email: "david@firstchoice.com",
-    phone: "+1 555-321-6547",
-    engagementLevel: "Medium",
-    status: "In Progress",
-    priorityScore: 72,
-    lastContact: "2025-03-04",
-    notes: "Comparing our solution with competitors.",
-  },
-]
+// Replace the dummy leads with an interface for the real data
+interface Lead {
+  id: number
+  user_id: string | number
+  Conversion: string | number
+  task_id: string
+  status: string
+  processing_start_time: string
+  processing_end_time: string
+  File_Name: string
+  priorityScore?: number
+  // Additional fields for display
+  Name?: string
+  Contact?: string
+  Email?: string
+}
 
-// Dummy data for follow-up tasks
+// Keep the dummy tasks and insights for now
 const dummyTasks = [
   {
     id: 1,
@@ -132,7 +89,6 @@ const dummyTasks = [
   },
 ]
 
-// Dummy insights data
 const dummyInsights = [
   {
     id: 1,
@@ -158,16 +114,85 @@ const dummyInsights = [
 ]
 
 export default function SalesAgentPage() {
-  
-  const { isAuthenticated } = useAuth(true);
-  const router = useRouter();
+  const { isAuthenticated, user } = useAuth(true)
+  const router = useRouter()
 
-  const [leads, setLeads] = useState(dummyLeads)
+  // Update state to use the new Lead interface
+  const [leads, setLeads] = useState<Lead[]>([])
   const [tasks, setTasks] = useState(dummyTasks)
   const [insights, setInsights] = useState(dummyInsights)
-  const [selectedLead, setSelectedLead] = useState<(typeof dummyLeads)[0] | null>(null)
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
-  const [engagementFilter, setEngagementFilter] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const [numAgents, setNumAgents] = useState(1)
+  const [isCalling, setIsCalling] = useState(false)
+  const [callStatus, setCallStatus] = useState<{
+    message: string
+    type: "success" | "info" | "warning" | "error"
+  } | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10 // Show 10 leads per page
+
+  // Add a function to fetch data from the API
+  const fetchLeadData = async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const userId = user?.id || 6921 // Use the actual user ID or fallback
+      const response = await ApiService.getMappedUserData(userId)
+
+      if (response.success && response.data?.data?.data) {
+        // Transform the data to match our Lead interface
+        const transformedData: Lead[] = response.data.data.data.map((item: any, index: number) => {
+          // Extract name, contact, and email from the data if available
+          // If not available, generate placeholder data
+          const name = item.Name || `Lead ${index + 1}`
+          const contact = item.Contact || item.Phone || "N/A"
+          const email = item.Email || `lead${index + 1}@example.com`
+
+          return {
+            id: index,
+            user_id: item.user_id || userId,
+            Conversion: item.Conversion || "N/A",
+            task_id: item.task_id || "N/A",
+            status: item.status || "New",
+            processing_start_time: item.processing_start_time || "N/A",
+            processing_end_time: item.processing_end_time || "N/A",
+            File_Name: item.File_Name || "Unknown",
+            priorityScore: Math.floor(Math.random() * 100), // Random score for now
+            // Add the display fields
+            Name: name,
+            Contact: contact,
+            Email: email,
+          }
+        })
+
+        setLeads(transformedData)
+      } else {
+        throw new Error(response.error || "Failed to fetch lead data")
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred while fetching data")
+      console.error("Error fetching lead data:", err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Add useEffect to fetch data on component mount
+  useEffect(() => {
+    fetchLeadData()
+  }, [user?.id])
+
+  // Handle refresh button click
+  const handleRefresh = () => {
+    fetchLeadData()
+  }
 
   // Handle marking a task as complete
   const handleCompleteTask = (taskId: number) => {
@@ -177,17 +202,174 @@ export default function SalesAgentPage() {
   // Filter leads based on selected filters
   const filteredLeads = leads.filter((lead) => {
     if (statusFilter && lead.status !== statusFilter) return false
-    if (engagementFilter && lead.engagementLevel !== engagementFilter) return false
     return true
   })
 
   // Sort leads by priority score (descending)
-  const sortedLeads = [...filteredLeads].sort((a, b) => b.priorityScore - a.priorityScore)
+  const sortedLeads = [...filteredLeads].sort((a, b) => (b.priorityScore || 0) - (a.priorityScore || 0))
+
+  // Calculate pagination values
+  const totalPages = Math.ceil(filteredLeads.length / itemsPerPage)
+  const paginatedLeads = sortedLeads.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+  const handleStartCalling = async () => {
+    setIsProcessing(true)
+    setCallStatus({ message: "Starting sales agents...", type: "info" })
+
+    try {
+      const userId = user?.id || 6921 // Use the actual user ID or fallback
+      const response = await ApiService.startProcessing(userId, numAgents)
+
+      if (ApiService.isSuccess(response)) {
+        setIsCalling(true)
+        setCallStatus({
+          message: `Successfully started ${numAgents} sales agent${numAgents > 1 ? "s" : ""}. Task ID: ${response.data?.task_id || "Unknown"}`,
+          type: "success",
+        })
+        // Refresh the lead data after starting the process
+        fetchLeadData()
+      } else {
+        setCallStatus({
+          message: `Failed to start sales agents: ${response.error || "Unknown error"}`,
+          type: "error",
+        })
+      }
+    } catch (error) {
+      setCallStatus({
+        message: `Error starting sales agents: ${error instanceof Error ? error.message : "Unknown error"}`,
+        type: "error",
+      })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleStopCalling = async () => {
+    setIsProcessing(true)
+    setCallStatus({ message: "Stopping sales agents...", type: "info" })
+
+    try {
+      const userId = user?.id || 6921 // Use the actual user ID or fallback
+      const response = await ApiService.stopProcessing(userId)
+
+      if (ApiService.isSuccess(response)) {
+        setIsCalling(false)
+        setCallStatus({
+          message: `Successfully stopped all sales agents. ${response.data?.task_ids?.length || 0} tasks terminated.`,
+          type: "success",
+        })
+        // Refresh the lead data after stopping the process
+        fetchLeadData()
+      } else {
+        setCallStatus({
+          message: `Failed to stop sales agents: ${response.error || "Unknown error"}`,
+          type: "error",
+        })
+      }
+    } catch (error) {
+      setCallStatus({
+        message: `Error stopping sales agents: ${error instanceof Error ? error.message : "Unknown error"}`,
+        type: "error",
+      })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [statusFilter])
 
   return (
     <DashboardLayout>
       <div className="p-4">
         <h1 className="text-3xl font-bold mb-6">AI Sales Agent</h1>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Sales Agent Control Panel</CardTitle>
+            <CardDescription>Configure and manage your AI sales agents</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <label className="text-sm font-medium">Number of Sales Agents</label>
+                    <span className="text-sm font-medium">{numAgents}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Users className="h-5 w-5 text-muted-foreground" />
+                    <Slider
+                      value={[numAgents]}
+                      min={1}
+                      max={10}
+                      step={1}
+                      onValueChange={(value) => setNumAgents(value[0])}
+                      disabled={isCalling || isProcessing}
+                      className="flex-1"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Select the number of concurrent AI sales agents to deploy (1-10)
+                  </p>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    onClick={handleStartCalling}
+                    disabled={isCalling || isProcessing}
+                  >
+                    <PhoneCall className="mr-2 h-4 w-4" />
+                    Start Calling
+                  </Button>
+                  <Button
+                    className="flex-1 bg-red-600 hover:bg-red-700"
+                    onClick={handleStopCalling}
+                    disabled={!isCalling || isProcessing}
+                  >
+                    <PhoneOff className="mr-2 h-4 w-4" />
+                    Stop Calling
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                {callStatus && (
+                  <Alert variant={callStatus.type === "error" ? "destructive" : "default"}>
+                    {callStatus.type === "success" && <CheckCircle className="h-4 w-4" />}
+                    {callStatus.type === "error" && <AlertCircle className="h-4 w-4" />}
+                    <AlertTitle>
+                      {callStatus.type === "success"
+                        ? "Success"
+                        : callStatus.type === "error"
+                          ? "Error"
+                          : callStatus.type === "warning"
+                            ? "Warning"
+                            : "Information"}
+                    </AlertTitle>
+                    <AlertDescription>{callStatus.message}</AlertDescription>
+                  </Alert>
+                )}
+
+                {isCalling && (
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex items-center">
+                      <div className="h-3 w-3 bg-blue-500 rounded-full animate-pulse mr-3"></div>
+                      <p className="font-medium text-blue-800">Sales agents are actively calling leads</p>
+                    </div>
+                    <p className="mt-2 text-sm text-blue-600">
+                      {numAgents} agent{numAgents > 1 ? "s" : ""} currently deployed. You can monitor progress in
+                      real-time below.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 md:grid-cols-3 mb-8">
           <div className="md:col-span-2">
@@ -198,6 +380,10 @@ export default function SalesAgentPage() {
                   <CardDescription>AI-prioritized leads based on engagement and conversion probability</CardDescription>
                 </div>
                 <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                    {isLoading ? "Refreshing..." : "Refresh Data"}
+                  </Button>
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm">
@@ -208,13 +394,13 @@ export default function SalesAgentPage() {
                     <DialogContent>
                       <DialogHeader>
                         <DialogTitle>Filter Leads</DialogTitle>
-                        <DialogDescription>Filter leads by status and engagement level</DialogDescription>
+                        <DialogDescription>Filter leads by status</DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
                         <div>
                           <h3 className="mb-2 text-sm font-medium">Status</h3>
                           <div className="flex flex-wrap gap-2">
-                            {["New", "In Progress", "Qualified", "Closed"].map((status) => (
+                            {["New", "In Progress", "Completed", "Failed"].map((status) => (
                               <Badge
                                 key={status}
                                 variant={statusFilter === status ? "default" : "outline"}
@@ -226,28 +412,12 @@ export default function SalesAgentPage() {
                             ))}
                           </div>
                         </div>
-                        <div>
-                          <h3 className="mb-2 text-sm font-medium">Engagement Level</h3>
-                          <div className="flex flex-wrap gap-2">
-                            {["Low", "Medium", "High"].map((level) => (
-                              <Badge
-                                key={level}
-                                variant={engagementFilter === level ? "default" : "outline"}
-                                className="cursor-pointer"
-                                onClick={() => setEngagementFilter(engagementFilter === level ? null : level)}
-                              >
-                                {level}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
                       </div>
                       <div className="flex justify-between">
                         <Button
                           variant="outline"
                           onClick={() => {
                             setStatusFilter(null)
-                            setEngagementFilter(null)
                           }}
                         >
                           Reset
@@ -259,61 +429,98 @@ export default function SalesAgentPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Company</TableHead>
-                      <TableHead>Engagement</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Priority Score</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedLeads.map((lead) => (
-                      <TableRow key={lead.id}>
-                        <TableCell>{lead.name}</TableCell>
-                        <TableCell>{lead.company}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              lead.engagementLevel === "High"
-                                ? "default"
-                                : lead.engagementLevel === "Medium"
-                                  ? "secondary"
-                                  : "outline"
-                            }
-                          >
-                            {lead.engagementLevel}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{lead.status}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <div className="w-full bg-gray-200 rounded-full h-2.5">
-                              <div
-                                className="bg-blue-600 h-2.5 rounded-full"
-                                style={{ width: `${lead.priorityScore}%` }}
-                              ></div>
-                            </div>
-                            <span className="ml-2 text-sm">{lead.priorityScore}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => setSelectedLead(lead)}>
-                              View
-                            </Button>
-                            <Button size="sm" variant="ghost">
-                              <Phone className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-32">
+                    <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+                    <p>Loading lead data...</p>
+                  </div>
+                ) : error ? (
+                  <div className="flex items-center justify-center h-32 text-red-500">
+                    <AlertCircle className="h-6 w-6 mr-2" />
+                    <p>{error}</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>#</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Contact</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Conversion</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedLeads.length > 0 ? (
+                        paginatedLeads.map((lead, index) => (
+                          <TableRow key={lead.id}>
+                            <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                            <TableCell>{lead.Name}</TableCell>
+                            <TableCell>{lead.Contact}</TableCell>
+                            <TableCell>{lead.Email}</TableCell>
+                            <TableCell>{lead.Conversion}</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  lead.status === "Completed"
+                                    ? "default"
+                                    : lead.status === "In Progress"
+                                      ? "secondary"
+                                      : lead.status === "Failed"
+                                        ? "destructive"
+                                        : "outline"
+                                }
+                              >
+                                {lead.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button size="sm" variant="outline" onClick={() => setSelectedLead(lead)}>
+                                  View
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={7} className="h-24 text-center">
+                            {statusFilter ? "No leads found matching your criteria." : "No lead data available."}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
+                <div className="flex items-center justify-between mt-4 border-t pt-4">
+                  <div className="text-sm text-muted-foreground">
+                    Showing <strong>{paginatedLeads.length}</strong> of <strong>{filteredLeads.length}</strong> leads
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <div className="text-sm font-medium">
+                      Page {currentPage} of {totalPages || 1}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages || totalPages === 0}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -416,82 +623,64 @@ export default function SalesAgentPage() {
             <DialogContent className="max-w-3xl">
               <DialogHeader>
                 <DialogTitle>Lead Details</DialogTitle>
-                <DialogDescription>Detailed information and interaction history</DialogDescription>
+                <DialogDescription>Detailed information about the lead</DialogDescription>
               </DialogHeader>
               <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-medium mb-2">Contact Information</h3>
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-3">
-                      <span className="text-sm font-medium text-gray-500">Name:</span>
-                      <span className="col-span-2">{selectedLead.name}</span>
-                    </div>
-                    <div className="grid grid-cols-3">
-                      <span className="text-sm font-medium text-gray-500">Company:</span>
-                      <span className="col-span-2">{selectedLead.company}</span>
-                    </div>
-                    <div className="grid grid-cols-3">
-                      <span className="text-sm font-medium text-gray-500">Email:</span>
-                      <span className="col-span-2">{selectedLead.email}</span>
-                    </div>
-                    <div className="grid grid-cols-3">
-                      <span className="text-sm font-medium text-gray-500">Phone:</span>
-                      <span className="col-span-2">{selectedLead.phone}</span>
-                    </div>
-                  </div>
-                </div>
                 <div>
                   <h3 className="font-medium mb-2">Lead Information</h3>
                   <div className="space-y-2">
                     <div className="grid grid-cols-3">
+                      <span className="text-sm font-medium text-gray-500">Name:</span>
+                      <span className="col-span-2">{selectedLead.Name}</span>
+                    </div>
+                    <div className="grid grid-cols-3">
+                      <span className="text-sm font-medium text-gray-500">Contact:</span>
+                      <span className="col-span-2">{selectedLead.Contact}</span>
+                    </div>
+                    <div className="grid grid-cols-3">
+                      <span className="text-sm font-medium text-gray-500">Email:</span>
+                      <span className="col-span-2">{selectedLead.Email}</span>
+                    </div>
+                    <div className="grid grid-cols-3">
                       <span className="text-sm font-medium text-gray-500">Status:</span>
                       <span className="col-span-2">{selectedLead.status}</span>
                     </div>
-                    <div className="grid grid-cols-3">
-                      <span className="text-sm font-medium text-gray-500">Engagement:</span>
-                      <span className="col-span-2">{selectedLead.engagementLevel}</span>
-                    </div>
-                    <div className="grid grid-cols-3">
-                      <span className="text-sm font-medium text-gray-500">Priority Score:</span>
-                      <span className="col-span-2">{selectedLead.priorityScore}</span>
-                    </div>
-                    <div className="grid grid-cols-3">
-                      <span className="text-sm font-medium text-gray-500">Last Contact:</span>
-                      <span className="col-span-2">{selectedLead.lastContact}</span>
-                    </div>
                   </div>
                 </div>
-                <div className="md:col-span-2">
-                  <h3 className="font-medium mb-2">Notes</h3>
-                  <p className="text-sm">{selectedLead.notes}</p>
+                <div>
+                  <h3 className="font-medium mb-2">Processing Information</h3>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-3">
+                      <span className="text-sm font-medium text-gray-500">File Name:</span>
+                      <span className="col-span-2">{selectedLead.File_Name}</span>
+                    </div>
+                    <div className="grid grid-cols-3">
+                      <span className="text-sm font-medium text-gray-500">Task ID:</span>
+                      <span className="col-span-2">{selectedLead.task_id}</span>
+                    </div>
+                    <div className="grid grid-cols-3">
+                      <span className="text-sm font-medium text-gray-500">Start Time:</span>
+                      <span className="col-span-2">{selectedLead.processing_start_time}</span>
+                    </div>
+                    <div className="grid grid-cols-3">
+                      <span className="text-sm font-medium text-gray-500">End Time:</span>
+                      <span className="col-span-2">{selectedLead.processing_end_time}</span>
+                    </div>
+                    <div className="grid grid-cols-3">
+                      <span className="text-sm font-medium text-gray-500">Conversion:</span>
+                      <span className="col-span-2">{selectedLead.Conversion}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="flex justify-between mt-4">
                 <Button variant="outline" onClick={() => setSelectedLead(null)}>
                   Close
                 </Button>
-                <div className="flex gap-2">
-                  <Button>
-                    <Phone className="h-4 w-4 mr-2" />
-                    Call Lead
-                  </Button>
-                  <Button variant="secondary">Add Task</Button>
-                </div>
               </div>
             </DialogContent>
           </Dialog>
         )}
-
-        {/* Comments for future backend integration */}
-        {/* 
-          TODO: Backend Integration Points:
-          1. Replace dummy leads with API call to fetch real leads
-          2. Implement actual lead prioritization algorithm
-          3. Connect task management to backend services
-          4. Implement real-time insights generation
-          5. Add actual calling functionality
-          6. Implement lead filtering with backend API
-        */}
       </div>
     </DashboardLayout>
   )
