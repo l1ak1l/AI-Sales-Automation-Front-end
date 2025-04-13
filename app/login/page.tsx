@@ -27,7 +27,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:2000/auth/login", {
+      const response = await fetch("https://auth-servive.onrender.com/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
