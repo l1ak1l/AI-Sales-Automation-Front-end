@@ -27,7 +27,7 @@ export default function SignupPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("http://localhost:2000/auth/signup", {
+      const response = await fetch("https://auth-servive.onrender.com/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -45,7 +45,7 @@ export default function SignupPage() {
         alert(`Error: ${errorData.detail}`)
       } else {
         alert("Account created successfully!")
-        router.push('/reporting')  // Add this line to redirect
+        router.push('/dashboard')  // Add this line to redirect
       }
     } catch (error) {
       alert(`Something went wrong: `)
