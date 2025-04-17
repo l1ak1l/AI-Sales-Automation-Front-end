@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
   // Check if the request is for the root URL
   if (request.nextUrl.pathname === '/') {
     // Redirect to the desired route, e.g., "/home"
-    return NextResponse.redirect(new URL('/home', request.url));
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   // Allow the request to continue if not the root URL
