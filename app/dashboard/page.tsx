@@ -196,7 +196,7 @@ export default function DashboardPage() {
   return (
     <DashboardLayout>
       <div className="p-4 md:p-4 w-full">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 ml-4">
           <div>
             <h1 className="text-3xl font-bold mb-1">CRM Dashboard</h1>
             <p className="text-muted-foreground">View and manage your CRM data</p>
