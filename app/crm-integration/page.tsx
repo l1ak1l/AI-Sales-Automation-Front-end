@@ -414,7 +414,7 @@ export default function CRMIntegrationPage() {
   return (
     <DashboardLayout>
       <div className="p-4">
-        <h1 className="text-3xl font-bold mb-6">Connect Your Data</h1>
+        <h1 className="text-3xl font-bold mb-6 ml-4" >Connect Your Data</h1>
 
         <Tabs defaultValue="connect" className="mb-8">
           <TabsList className="mb-4">
