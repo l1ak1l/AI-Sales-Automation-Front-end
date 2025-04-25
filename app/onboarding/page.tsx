@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 export default function CompanyPage() {
+  const x=1
   const [companyInfo, setCompanyInfo] = useState({
     name: "",
     description: "",
@@ -396,7 +397,7 @@ export default function CompanyPage() {
 }
 
 
-// FAKE COMMIT 
+// FAKE COMMIT 123
 
 
 /* Add this to your global CSS file or as a style tag */
