@@ -168,21 +168,36 @@ export default function CRMIntegrationPage() {
   const [logs, setLogs] = useState(extractionLogs)
   const [files, setFiles] = useState(uploadedFiles)
   const [selectedPlatform, setSelectedPlatform] = useState<string | undefined>(undefined)
-  const [apiKey, setApiKey] = useState("")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
 
   // Handle connecting to a CRM platform
+
+
+
+
+  
+
+
+  
   const handleConnect = (platformId: number) => {
-    // In a real application, this would validate the API key and connect to the CRM
-    // For now, we'll just update the state to simulate a successful connection
+    console.log("Attempting to connect to platform ID:", platformId);
+    const platform = platforms.find((p) => p.id === platformId);
+    
+    // Special handling for HubSpot OAuth flow
+    console.log("handleConnect:",handleConnect)
+    if (platform?.name === "HubSpot") {
+      window.location.href = 'https://app-na2.hubspot.com/oauth/authorize?client_id=0e6915e3-df08-43cd-acfd-fe908305d1ed&redirect_uri=https://ai-sales-automation-front-end.vercel.app/dashboard&scope=oauth%20crm.objects.contacts.read';
+      return;
+    }
+
+    // Existing connection logic for other platforms
     setPlatforms(
       platforms.map((platform) => (platform.id === platformId ? { ...platform, connected: true } : platform)),
-    )
+    );
 
     // Add a log entry
-    const platform = platforms.find((p) => p.id === platformId)
     if (platform) {
       const newLog = {
         id: logs.length + 1,
@@ -195,7 +210,6 @@ export default function CRMIntegrationPage() {
 
     // Reset form
     setSelectedPlatform(undefined)
-    setApiKey("")
   }
 
   // Handle updating a field override
@@ -435,7 +449,7 @@ export default function CRMIntegrationPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4">
-                  <div className="flex items-center gap-4">
+                  {/* <div className="flex items-center gap-4">
                     <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
                       <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Select CRM" />
@@ -448,19 +462,18 @@ export default function CRMIntegrationPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Input
-                      placeholder="Enter API Key"
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      className="flex-1"
-                    />
                     <Button
-                      onClick={() => handleConnect(Number(selectedPlatform))}
-                      disabled={!selectedPlatform || !apiKey}
+                      onClick={() => {
+                        if (selectedPlatform) {
+                          handleConnect(Number(selectedPlatform));
+                        } else {
+                          alert("Please select a CRM platform first");
+                        }
+                      }}
                     >
                       Connect
                     </Button>
-                  </div>
+                  </div> */}
 
                   <Table>
                     <TableHeader>
@@ -487,7 +500,11 @@ export default function CRMIntegrationPage() {
                                 Disconnect
                               </Button>
                             ) : (
-                              <Button size="sm" onClick={() => setSelectedPlatform(platform.id.toString())}>
+                              <Button size="sm" onClick={() =>
+                                 {
+                                setSelectedPlatform(platform.id.toString())
+                                handleConnect(platform.id)
+                              }}>
                                 Connect
                               </Button>
                             )}

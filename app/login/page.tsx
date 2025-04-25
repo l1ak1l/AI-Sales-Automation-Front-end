@@ -47,6 +47,7 @@ export default function LoginPage() {
           token: data.token 
         }));
         
+        // Redirect to dashboard
         router.push('/dashboard');
 
         // Handle successful login: store the token or redirect
