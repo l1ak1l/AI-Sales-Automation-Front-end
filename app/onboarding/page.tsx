@@ -395,6 +395,10 @@ export default function CompanyPage() {
   );
 }
 
+
+// FAKE COMMIT 
+
+
 /* Add this to your global CSS file or as a style tag */
 {/* 
   .custom-scrollbar::-webkit-scrollbar {
