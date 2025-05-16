@@ -4,7 +4,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
-import { Navbar } from "@/components/navbar"
 
 export default function VoiceDemoPage() {
   const [isListening, setIsListening] = useState(false)
@@ -110,9 +109,8 @@ export default function VoiceDemoPage() {
 
   return (
     <div className="w-full min-h-screen bg-[#f8f8f8] flex flex-col">
-      <Navbar />
-      <main className="flex-grow flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-2xl">
+      <main className="flex-grow flex flex-col items-center justify-center pt-24 ">
+        <div className="w-full max-w-2xl ">
           <motion.div
             className="w-64 h-64 mx-auto mb-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-500"
             animate={{
@@ -122,7 +120,7 @@ export default function VoiceDemoPage() {
             transition={{
               duration: 1.5,
               repeat: isListening ? Infinity : 0,
-              repeatType: 'reverse',
+              repeatType: 'reverse'
             }}
           />
           <div

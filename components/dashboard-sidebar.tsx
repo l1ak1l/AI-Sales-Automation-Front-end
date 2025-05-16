@@ -63,6 +63,12 @@ export function DashboardSidebar() {
       href: "/sales-agent",
       isActive: pathname === "/sales-agent",
     },
+    {
+      title: "Chabot Embed",
+      icon: Headphones,
+      href: "/chatbot-embed",
+      isActive: pathname === "/chatbot-embed",
+    },
   ]
 
   const accountNavItems = [
