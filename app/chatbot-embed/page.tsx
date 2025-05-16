@@ -1,11 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from "react"
 import { Button } from '@/components/ui/button';
 import { Copy } from 'lucide-react';
+import { useAuth } from "@/hooks/useAuth"
 import { DashboardLayout } from '@/components/dashboard-layout';
+import { useSelector } from "react-redux"
+import { RootState } from "@/app/store/store";
+import { useRouter } from "next/navigation"
 
 export default function EmbedPage() {
+    const router = useRouter()
+    const { isAuthenticated } = useAuth(true)
+    const user = useSelector((state: RootState) => state.auth.user)
+    
+
   const iframeCode = `<div className='flex items-center justify-center'>
         {" "}
         <iframe
